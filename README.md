@@ -20,7 +20,7 @@ This module does not store any personal data. See the file [`PERSONAL_DATA_DISCL
 See the file [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.
 
 **Issues.**
-For the time being, this project's GitHub issue tracker will be used; once the software is ready for prime time, we will likely switch to Jira.
+For the time being, [this project's GitHub issue tracker](https://github.com/indexdata/mod-reporting/issues) will be used; once the software is ready for prime time, we will likely switch to Jira.
 
 For now, see [`mod-ldp`'s README](https://github.com/folio-org/mod-ldp#readme) for further details.
 
