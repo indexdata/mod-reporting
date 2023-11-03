@@ -1,0 +1,108 @@
+{
+  "id" : "@artifactId@-@version@",
+  "name" : "ldp module",
+  "provides" : [ {
+    "id" : "ldp-query",
+    "version" : "1.2",
+      "handlers": [
+        {
+          "methods": [ "GET" ],
+          "pathPattern" : "/ldp/db/log",
+          "permissionsRequired": [ "ldp.read" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern" : "/ldp/db/columns",
+          "permissionsRequired": [ "ldp.read" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern" : "/ldp/db/tables",
+          "permissionsRequired": [ "ldp.read" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern" : "/ldp/db/query",
+          "permissionsRequired": [ "ldp.read" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern" : "/ldp/db/reports",
+          "permissionsRequired": [ "ldp.read" ]
+        },
+        {
+          "methods" : [ "PUT" ],
+          "pathPattern" : "/ldp/config/{id}",
+          "permissionsRequired" : [ "ldp.config.edit"]
+        },
+        {
+          "methods" : [ "GET" ],
+          "pathPattern" : "/ldp/config*",
+          "permissionsRequired" : [ "ldp.config.read"]
+        }
+  ]
+  } ],
+  "permissionSets": [
+    {
+      "description": "Read LDP data",
+      "displayName": "LDP -- Read",
+      "permissionName": "ldp.read"
+    },
+    {
+      "description" : "Read LDP configuration data",
+      "displayName": "LDP Config -- Read",
+      "permissionName": "ldp.config.read"
+    },
+    {
+      "description" : "Edit LDP configuration data",
+      "displayName" : "LDP Config -- Edit",
+      "permissionName" : "ldp.config.edit"
+    },
+    {
+      "description" : "All LDP permissions",
+      "displayName" : "LDP -- All",
+      "permissionName" : "ldp.all",
+      "subPermissions" : [
+        "ldp.read",
+        "ldp.config.read",
+        "ldp.config.edit"
+      ]
+    }
+],
+  "launchDescriptor" : {
+    "dockerImage": "@artifactId@:@version@",
+    "dockerPull": false,
+    "dockerArgs": {
+      "HostConfig": {
+        "Memory": 357913941,
+        "PortBindings": { "8001/tcp": [ { "HostPort": "%p" } ] }
+      }
+    },
+    "env": [
+      {
+        "name": "JAVA_OPTIONS",
+        "value": "-XX:MaxRAMPercentage=66.0"
+      },
+      {
+        "name" : "DB_HOST",
+        "value" : "postgres"
+      },
+      {
+        "name" : "DB_PORT",
+        "value" : "5432"
+      },
+      {
+        "name" : "DB_USERNAME",
+        "value" : "folio_admin"
+      },
+      {
+        "name" : "DB_PASSWORD",
+        "value" : "folio_admin"
+      },
+      {
+        "name" : "DB_DATABASE",
+        "value" : "okapi_modules"
+      }
+    ]
+  }
+}
