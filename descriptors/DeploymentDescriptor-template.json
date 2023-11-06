@@ -2,7 +2,6 @@
   "srvcId": "@artifactId@-@version@",
   "nodeId": "localhost",
   "descriptor": {
-    "exec": "java -Dport=%p -jar ../mod-ldp/target/mod-ldp.jar"
+    "exec": "./mod-reporting -port %p"
   }
 }
-
