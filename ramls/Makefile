@@ -1,4 +1,9 @@
-# To make "z-schema" available: yarn global add z-schema
+# To make "z-schema" available:
+#	yarn global add z-schema
+#
+# To make "api_lint.py" and "api_doc.py" available:
+#	git clone git@github.com:folio-org/folio-tools
+# and follow the instructions in its "api-lint" and "api-doc" directories
 
 lint: schemalint examplelint apilint
 
