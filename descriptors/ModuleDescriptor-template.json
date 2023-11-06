@@ -4,43 +4,43 @@
   "provides" : [ {
     "id" : "ldp-query",
     "version" : "1.2",
-      "handlers": [
-        {
-          "methods": [ "GET" ],
-          "pathPattern" : "/ldp/db/log",
-          "permissionsRequired": [ "ldp.read" ]
-        },
-        {
-          "methods": [ "GET" ],
-          "pathPattern" : "/ldp/db/columns",
-          "permissionsRequired": [ "ldp.read" ]
-        },
-        {
-          "methods": [ "GET" ],
-          "pathPattern" : "/ldp/db/tables",
-          "permissionsRequired": [ "ldp.read" ]
-        },
-        {
-          "methods": [ "POST" ],
-          "pathPattern" : "/ldp/db/query",
-          "permissionsRequired": [ "ldp.read" ]
-        },
-        {
-          "methods": [ "POST" ],
-          "pathPattern" : "/ldp/db/reports",
-          "permissionsRequired": [ "ldp.read" ]
-        },
-        {
-          "methods" : [ "PUT" ],
-          "pathPattern" : "/ldp/config/{id}",
-          "permissionsRequired" : [ "ldp.config.edit"]
-        },
-        {
-          "methods" : [ "GET" ],
-          "pathPattern" : "/ldp/config*",
-          "permissionsRequired" : [ "ldp.config.read"]
-        }
-  ]
+    "handlers": [
+      {
+        "methods": [ "GET" ],
+        "pathPattern" : "/ldp/db/log",
+        "permissionsRequired": [ "ldp.read" ]
+      },
+      {
+        "methods": [ "GET" ],
+        "pathPattern" : "/ldp/db/columns",
+        "permissionsRequired": [ "ldp.read" ]
+      },
+      {
+        "methods": [ "GET" ],
+        "pathPattern" : "/ldp/db/tables",
+        "permissionsRequired": [ "ldp.read" ]
+      },
+      {
+        "methods": [ "POST" ],
+        "pathPattern" : "/ldp/db/query",
+        "permissionsRequired": [ "ldp.read" ]
+      },
+      {
+        "methods": [ "POST" ],
+        "pathPattern" : "/ldp/db/reports",
+        "permissionsRequired": [ "ldp.read" ]
+      },
+      {
+        "methods" : [ "PUT" ],
+        "pathPattern" : "/ldp/config/{id}",
+        "permissionsRequired" : [ "ldp.config.edit"]
+      },
+      {
+        "methods" : [ "GET" ],
+        "pathPattern" : "/ldp/config*",
+        "permissionsRequired" : [ "ldp.config.read"]
+      }
+    ]
   } ],
   "permissionSets": [
     {
@@ -68,7 +68,7 @@
         "ldp.config.edit"
       ]
     }
-],
+  ],
   "launchDescriptor" : {
     "dockerImage": "@artifactId@:@version@",
     "dockerPull": false,
