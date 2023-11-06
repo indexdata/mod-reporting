@@ -1,2 +1,6 @@
 **default**:
-	@echo No make rules defined yet
+	(cd target; make)
+
+clean:
+	(cd target; make clean)
+
