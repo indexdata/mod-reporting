@@ -1,4 +1,4 @@
-# See also: ramls/Makefile (used only for validation)
+# See also: ramls/Makefile (used only for validation and documentation)
 
 **default**:
 	(cd target; make)
