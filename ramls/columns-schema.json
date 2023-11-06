@@ -11,8 +11,7 @@
       },
       "data_type": {
         "type": "string",
-        "description": "The type of the column",
-        "example": "boolean, character varying, timestamp with time zone"
+        "description": "The type of the column. For example: boolean, character varying, timestamp with time zone"
       },
       "ordinalPosition": {
         "type": "string",
