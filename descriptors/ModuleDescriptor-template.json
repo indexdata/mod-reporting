@@ -1,6 +1,6 @@
 {
   "id" : "@artifactId@-@version@",
-  "name" : "ldp module",
+  "name" : "reporting module",
   "provides" : [ {
     "id" : "ldp-query",
     "version" : "1.2",
@@ -74,15 +74,11 @@
     "dockerPull": false,
     "dockerArgs": {
       "HostConfig": {
-        "Memory": 357913941,
+        "Memory": 20000000,
         "PortBindings": { "8001/tcp": [ { "HostPort": "%p" } ] }
       }
     },
     "env": [
-      {
-        "name": "JAVA_OPTIONS",
-        "value": "-XX:MaxRAMPercentage=66.0"
-      },
       {
         "name" : "DB_HOST",
         "value" : "postgres"
