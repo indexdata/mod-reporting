@@ -1,0 +1,11 @@
+{
+  "logging": {
+    "categories": "config,listen,request,status,response",
+    "prefix": "--",
+    "timestamp": true
+  },
+  "listen": {
+    "host": "localhost",
+    "port": 12369
+  }
+}
