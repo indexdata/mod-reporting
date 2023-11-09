@@ -19,6 +19,8 @@ This tool exists to allow the old values to be read from the configuration store
 
 `ldp-config-tool.js` written in Node, using [the FolioJS library](https://github.com/indexdata/foliojs). All dependencies are captured by the package file in this directory, so to build it you just need to run `yarn install`.
 
+This software was developed using Node v18.17.1 and Yarn v1.22.19, but there is no reason to think that earlier version won't work just fine. We're not doing anything unusual here that would need bleeding-edge versions.
+
 
 ## Running
 
