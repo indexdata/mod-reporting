@@ -18,7 +18,8 @@ superlint:
 	-deadcode
 
 test:
-	go test ./...
+	go test -coverprofile=c.out ./...
+	go tool cover -func=c.out | sed 's/^github.com\/indexdata\/mod-reporting\/src\///'
 
 clean:
 	rm -f $(TARGET)
