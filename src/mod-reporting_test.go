@@ -17,9 +17,7 @@ func TestModReporting(t *testing.T) {
 
 	// Allow half a second for the server to start. This is ugly
 	time.Sleep(time.Second / 2)
-	client := http.Client{}
-	runTests(t, client)
-
+	runTests(t, http.Client{})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Cannot create HTTP server:", err)
 		os.Exit(3)
@@ -33,8 +31,8 @@ func runTests(t *testing.T, client http.Client) {
 		status int
 		re     string
 	}{
-		{"home", "", 200, "This is"},
-		{"health check", "admin/health", 200, "Behold."},
+		{"home", "", 200, "This is .*mod-reporting"},
+		{"health check", "admin/health", 200, "Behold!"},
 		{"short bad path", "foo", 404, ""},
 		{"long bad path", "foo/bar/baz", 404, ""},
 		// XXX more cases to come here
