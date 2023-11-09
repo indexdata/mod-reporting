@@ -7,24 +7,10 @@ import "time"
 import "net/http"
 import "io"
 import "regexp"
-import "github.com/MikeTaylor/catlogger"
 
 func TestModReporting(t *testing.T) {
-	file := "../etc/config.json"
-
-	// For now we duplicate code from main.go
-	var cfg *config
-	cfg, err := readConfig(file)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot read config file '%s': %v\n", file, err)
-		os.Exit(2)
-	}
-
-	cl := cfg.Logging
-	logger := catlogger.MakeLogger(cl.Categories, cl.Prefix, cl.Timestamp)
-	logger.Log("config", fmt.Sprintf("%+v", cfg))
-
-	server := MakeModReportingServer(cfg, logger, "..")
+	cfg, server := MakeConfiguredServer("../etc/config.json", "..");
+	var err error
 	go func() {
 		err = server.launch(cfg.Listen.Host + ":12369")
 	}()
