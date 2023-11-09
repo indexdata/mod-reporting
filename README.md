@@ -25,6 +25,11 @@ For the time being, [this project's GitHub issue tracker](https://github.com/ind
 For now, see [`mod-ldp`'s README](https://github.com/folio-org/mod-ldp#readme) for further details.
 
 
+## See also
+
+* [The `ldp-config-tool` utility](config-tool)
+
+
 ## Author
 
 Mike Taylor, [Index Data ApS](https://www.indexdata.com/).
