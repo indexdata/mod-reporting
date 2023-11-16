@@ -30,11 +30,11 @@ for (let i = 0; i < json.length; i++) {
     });
   } else {
     const id = uuidv4();
-    await session.folioFetch(`/settings/entries/${id}`, {
-      method: 'PUT',
+    await session.folioFetch(`/settings/entries`, {
+      method: 'POST',
       json: {
         id,
-        scope: 'mod-reporting',
+        scope: 'ui-ldp.admin',
         key: rec.key,
         value: rec.value,
       }
