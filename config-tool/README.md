@@ -4,6 +4,7 @@
 * [Background](#background)
 * [Building](#building)
 * [Running](#running)
+    * [Setting directly into mod-settings](#setting-directly-into-mod-settings)
 
 
 ## Background
@@ -43,6 +44,10 @@ Then disable mod-ldp for your tenant, and enable mod-reporting. Then:
 ```
 $ ldp-config-tool.js set < config-dump.json
 ```
+
+### Setting directly into mod-settings
+
+Sometimes in practice it's necessaey to copy mod-ldp configuration into mod-settings before mod-reporting is available to write through. So there is also a new `write-settings` mode for this script which will insert directly into mod-settings.
 
 
 <!--
