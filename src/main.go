@@ -6,26 +6,20 @@ import "errors"
 import "github.com/indexdata/foliogo"
 
 
+// This is sensationally clumsy compared with the corresponding JavaScript
 func getDbInfo(json foliogo.Hash) (string, string, string, error) {
 	resultInfo := json["resultInfo"]
 	totalRecords := resultInfo.(map[string]interface{})["totalRecords"]
 	count := int(totalRecords.(float64))
-	fmt.Printf("found %d 'dbinfo' settings\n", count);
 	if count < 1 {
 		return "", "", "", errors.New("no 'dbinfo' setting in FOLIO database")
 	}
 	items := json["items"]
-	fmt.Printf("got items %v\n", items);
 	itemArray := items.([]interface{})
-	fmt.Printf("got itemArray %v\n", itemArray);
 	item0 := itemArray[0]
-	fmt.Printf("got item0 %v\n", item0);
 	record := item0.(map[string]interface{})
-	fmt.Printf("got record %v\n", record);
 	value := record["value"]
-	fmt.Printf("got value %v\n", value);
 	hash := value.(map[string]interface{})
-	fmt.Printf("got hash %v\n", hash);
 	return hash["url"].(string), hash["user"].(string), hash["pass"].(string), nil
 }
 
@@ -48,10 +42,14 @@ func main() {
 		os.Exit(2)
 	}
 
-	dbUrl, dbUser, dbPass, err := getDbInfo(json)
-	fmt.Printf("DB url=%s, user=%s, pass=%s", dbUrl, dbUser, dbPass)
-
+	dbUrl, dbUser, _ /*dbPass*/, err := getDbInfo(json)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: extract data from 'dbinfo': %s\n", os.Args[0], err)
+		os.Exit(2)
+	}
 	cfg, server := MakeConfiguredServer(os.Args[1], ".", session)
+	server.Log("db", "url=" + dbUrl + ", user=" + dbUser)
+
 	err = server.launch(cfg.Listen.Host + ":" + fmt.Sprint(cfg.Listen.Port))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s: cannot create HTTP server: %s\n", os.Args[0], err)

@@ -41,18 +41,23 @@ func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string, 
 }
 
 
+func (server *ModReportingServer)Log(cat string, args ...string) {
+	server.logger.Log(cat, args...)
+}
+
+
 func (server *ModReportingServer) launch(hostspec string) error {
 	server.server.Addr = hostspec
-	server.logger.Log("listen", "listening on", hostspec)
+	server.Log("listen", "listening on", hostspec)
 	err := server.server.ListenAndServe()
-	server.logger.Log("listen", "finished listening on", hostspec)
+	server.Log("listen", "finished listening on", hostspec)
 	return err
 }
 
 
 func handler(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
 	path := req.URL.Path
-	server.logger.Log("path", path)
+	server.Log("path", path)
 
 	if (path == "/") {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
