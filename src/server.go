@@ -4,15 +4,17 @@ import "fmt"
 import "net/http"
 import "time"
 import "github.com/MikeTaylor/catlogger"
+import "github.com/indexdata/foliogo"
 
 type ModReportingServer struct {
 	config *config
 	logger *catlogger.Logger
 	root string
+	folioSession foliogo.Session
 	server http.Server
 }
 
-func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) *ModReportingServer {
+func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string, folioSession foliogo.Session) *ModReportingServer {
 	tr := &http.Transport{}
 	tr.RegisterProtocol("file", http.NewFileTransport(http.Dir(root)))
 
@@ -21,6 +23,7 @@ func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) 
 		config: cfg,
 		logger: logger,
 		root: root,
+		folioSession: folioSession,
 		server: http.Server{
 			ReadTimeout:  30 * time.Second,
 			WriteTimeout: 30 * time.Second,
