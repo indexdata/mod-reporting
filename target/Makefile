@@ -8,7 +8,7 @@ TARGETS=Activate.json DeploymentDescriptor.json Discovery.json ModuleDescriptor.
 	sed "s/@artifactId@/$(ARTIFACTID)/g;s/@version@/$(VERSION)/g" $< > $@
 
 clean:
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) mod-reporting
 
 debug:
 	@echo ARTIFACTID=$(ARTIFACTID)
