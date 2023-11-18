@@ -1,8 +1,8 @@
 {
   "logging": {
     "categories": "config,listen,path",
-    "prefix": "--",
-    "timestamp": true
+    "prefix": "",
+    "timestamp": false
   },
   "listen": {
     "host": "localhost",
