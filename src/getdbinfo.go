@@ -1,0 +1,43 @@
+package main
+
+import "errors"
+import "encoding/json"
+import "github.com/indexdata/foliogo"
+
+
+type value struct {
+	Url string `json:"url"`
+	Pass string `json:"pass"`
+	User string `json:"user"`
+}
+
+type item struct {
+	Value value `json:"value"`
+}
+
+type resultInfo struct {
+	TotalRecords int `json:"totalRecords"`
+}
+
+type response struct {
+	Items []item `json:"items"`
+	ResultInfo resultInfo `json:"resultInfo"`
+}
+
+func getDbInfo(session foliogo.Session) (string, string, string, error) {
+	bytes, err := session.Fetch(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="dbinfo"`, foliogo.RequestParams{})
+	if err != nil {
+		return "", "", "", errors.New("cannot fetch 'dbinfo' from config: " + err.Error())
+	}
+
+	var r response
+	err = json.Unmarshal(bytes, &r)
+	if err != nil {
+		return "", "", "", errors.New("decode 'dbinfo' JSON failed: " + err.Error())
+	}
+	if r.ResultInfo.TotalRecords < 1 {
+		return "", "", "", errors.New("no 'dbinfo' setting in FOLIO database")
+	}
+	value := r.Items[0].Value
+	return value.Url, value.User, value.Pass, nil
+}
