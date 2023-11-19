@@ -51,5 +51,7 @@ Sometimes in practice it's necessaey to copy mod-ldp configuration into mod-sett
 
 
 <!--
-env OKAPI_URL=https://folio-snapshot-okapi.dev.folio.org OKAPI_TENANT=diku OKAPI_USER=diku_admin OKAPI_PW= LOGCAT=auth,op,status ./ldp-config-tool.js get
+env OKAPI_URL=https://folio-snapshot-okapi.dev.folio.org OKAPI_TENANT=diku OKAPI_USER=diku_admin OKAPI_PW= LOGCAT=auth,op,status ./l
+dp-config-tool.js get > config-dump.json
+env OKAPI_URL=https://folio-snapshot-okapi.dev.folio.org OKAPI_TENANT=diku OKAPI_USER=diku_admin OKAPI_PW= LOGCAT=auth,op,status ./ldp-config-tool.js write-settings < config-dump.json
 -->
