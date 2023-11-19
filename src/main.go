@@ -3,24 +3,40 @@ package main
 import "os"
 import "fmt"
 import "errors"
+import "encoding/json"
 import "github.com/indexdata/foliogo"
 
 
-// This is sensationally clumsy compared with the corresponding JavaScript
-func getDbInfo(json foliogo.Hash) (string, string, string, error) {
-	resultInfo := json["resultInfo"]
-	totalRecords := resultInfo.(map[string]interface{})["totalRecords"]
-	count := int(totalRecords.(float64))
-	if count < 1 {
+type value struct {
+	Url string `json:"url"`
+	Pass string `json:"pass"`
+	User string `json:"user"`
+}
+
+type item struct {
+	Value value `json:"value"`
+}
+
+type resultInfo struct {
+	TotalRecords int `json:"totalRecords"`
+}
+
+type response struct {
+	Items []item `json:"items"`
+	ResultInfo resultInfo `json:"resultInfo"`
+}
+
+func getDbInfo(bytes []byte) (string, string, string, error) {
+	var r response
+	err := json.Unmarshal(bytes, &r)	
+	if err != nil {
+		return "", "", "", errors.New("decode 'dbinfo' JSON failed: " + err.Error())
+	}
+	if r.ResultInfo.TotalRecords < 1 {
 		return "", "", "", errors.New("no 'dbinfo' setting in FOLIO database")
 	}
-	items := json["items"]
-	itemArray := items.([]interface{})
-	item0 := itemArray[0]
-	record := item0.(map[string]interface{})
-	value := record["value"]
-	hash := value.(map[string]interface{})
-	return hash["url"].(string), hash["user"].(string), hash["pass"].(string), nil
+	value := r.Items[0].Value
+	return value.Url, value.User, value.Pass, nil
 }
 
 
