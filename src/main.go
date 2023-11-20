@@ -17,12 +17,13 @@ func main() {
 		os.Exit(2)
 	}
 
+	cfg, server := MakeConfiguredServer(os.Args[1], ".", session)
+
 	dbUrl, dbUser, _ /*dbPass*/, err := getDbInfo(session)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s: cannot extract data from 'dbinfo': %s\n", os.Args[0], err)
 		os.Exit(2)
 	}
-	cfg, server := MakeConfiguredServer(os.Args[1], ".", session)
 	server.Log("db", "url=" + dbUrl + ", user=" + dbUser)
 
 	err = server.launch(cfg.Listen.Host + ":" + fmt.Sprint(cfg.Listen.Port))
