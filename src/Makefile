@@ -1,6 +1,6 @@
 TARGET=../target/mod-reporting
 
-$(TARGET): main.go config.go getdbinfo.go http-error.go server.go
+$(TARGET): main.go config-file.go getdbinfo.go http-error.go server.go ldp-config.go
 	go build -o $@
 
 run: $(TARGET)

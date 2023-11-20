@@ -89,11 +89,15 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 <ul>
   <li><a href="/admin/health">Health check</a></li>
   <li><a href="/htdocs/">Static area</a></li>
-</ul>`);
-		return;
+  <li><a href="/ldp/config">Legacy configuration WSAPI</a></li>
+</ul>`)
+		return
 	} else if path == "/admin/health" {
-		fmt.Fprintln(w, "Behold! I live!!");
-		return;
+		fmt.Fprintln(w, "Behold! I live!!")
+		return
+	} else if path == "/ldp/config" {
+		handleConfig(w, req, server)
+		return
 	} else {
 		// Unrecognized
 		w.WriteHeader(http.StatusNotFound)

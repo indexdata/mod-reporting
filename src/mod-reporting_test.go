@@ -10,7 +10,7 @@ import "regexp"
 import "github.com/indexdata/foliogo"
 
 func TestModReporting(t *testing.T) {
-	cfg, server := MakeConfiguredServer("../etc/config.json", "..", foliogo.Session{});
+	cfg, server := MakeConfiguredServer("../etc/config.json", "..", foliogo.Session{})
 	var err error
 	go func() {
 		err = server.launch(cfg.Listen.Host + ":12369")
