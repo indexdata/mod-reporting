@@ -1,10 +1,14 @@
 package main
 
+import "context"
 import "fmt"
 import "net/http"
 import "time"
+import "strings"
 import "github.com/MikeTaylor/catlogger"
 import "github.com/indexdata/foliogo"
+import "github.com/jackc/pgx/v5"
+
 
 type ModReportingServer struct {
 	config *config
@@ -12,6 +16,7 @@ type ModReportingServer struct {
 	root string
 	folioSession foliogo.Session
 	server http.Server
+	dbConn *pgx.Conn
 }
 
 func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string, folioSession foliogo.Session) *ModReportingServer {
@@ -46,6 +51,24 @@ func (server *ModReportingServer)Log(cat string, args ...string) {
 }
 
 
+func (server *ModReportingServer) connectDb(url string, user string, pass string) error {
+	// For historical reasons, database connection configuration is often JDBCish
+	if pass != "x" {
+		// XXX until we have found an LDP/MetaDB database to connect to
+		return nil
+	}
+
+	dbUrl := strings.Replace(url, "jdbc:postgresql", "postgres", 1)
+	conn, err := pgx.Connect(context.Background(), dbUrl)
+	fmt.Println("got connection", conn, "and error", err)
+	if err != nil {
+		return err
+	}
+	server.dbConn = conn
+	return nil
+}
+
+
 func (server *ModReportingServer) launch(hostspec string) error {
 	server.server.Addr = hostspec
 	server.Log("listen", "listening on", hostspec)
@@ -59,7 +82,7 @@ func handler(w http.ResponseWriter, req *http.Request, server *ModReportingServe
 	path := req.URL.Path
 	server.Log("path", path)
 
-	if (path == "/") {
+	if path == "/" {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		fmt.Fprintln(w, `
 This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. Try:
@@ -68,7 +91,7 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
   <li><a href="/htdocs/">Static area</a></li>
 </ul>`);
 		return;
-	} else if (path == "/admin/health") {
+	} else if path == "/admin/health" {
 		fmt.Fprintln(w, "Behold! I live!!");
 		return;
 	} else {
