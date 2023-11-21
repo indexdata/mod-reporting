@@ -1,5 +1,6 @@
 package main
 
+import "os"
 import "errors"
 import "encoding/json"
 import "github.com/indexdata/foliogo"
@@ -25,6 +26,14 @@ type response struct {
 }
 
 func getDbInfo(session foliogo.Session) (string, string, string, error) {
+	// If defined, environment variables override the setting from the database
+	dburl := os.Getenv("REPORTING_DB_URL")
+	dbuser := os.Getenv("REPORTING_DB_USER")
+	dbpass := os.Getenv("REPORTING_DB_PASS")
+	if dburl != "" && dbuser != "" && dbpass != "" {
+		return dburl, dbuser, dbpass, nil
+	}
+
 	bytes, err := session.Fetch(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="dbinfo"`, foliogo.RequestParams{})
 	if err != nil {
 		return "", "", "", errors.New("cannot fetch 'dbinfo' from config: " + err.Error())

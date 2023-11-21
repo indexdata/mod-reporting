@@ -25,6 +25,15 @@ For the time being, [this project's GitHub issue tracker](https://github.com/ind
 For now, see [`mod-ldp`'s README](https://github.com/folio-org/mod-ldp#readme) for further details.
 
 
+## Environment
+
+In normal operation, mod-reporting determines which underlying reporting database to connect to on the basis of the information configured in the mod-settings record with scope `ui-ldp.config` and key `dbinfo`, as managed by the "Database configuration" settings page of the Reporting app. However, these configured settings can be overridden if mod-reporting is run with all three of the following environment variables set:
+
+* `REPORTING_DB_URL` -- The full URL of the PostgreSQL database to connect to, e.g. `postgres://localhost:5432/metadb`
+* `REPORTING_DB_USER` -- The name of the PostgreSQL user to act as when accessing this database
+* `REPORTING_DB_PASS` -- The password to use for nominated user
+
+
 ## See also
 
 * [The `ldp-config-tool` utility](config-tool)
