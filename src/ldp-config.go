@@ -81,13 +81,7 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(bytes)
-	if err != nil {
-		// XXX Now what?
-		return
-	}
-
-	return
+	_, _ = w.Write(bytes)
 }
 
 
