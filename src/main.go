@@ -28,7 +28,7 @@ func main() {
 	server.Log("db", "url=" + dbUrl + ", user=" + dbUser)
 
 	err = server.connectDb(dbUrl, dbUser, dbPass)
-	exitIfError(err, 4, "cannot connected to DB")
+	exitIfError(err, 4, "cannot connect to DB")
 	server.Log("db", "connected to DB", dbUrl)
 
 	err = server.launch(cfg.Listen.Host + ":" + fmt.Sprint(cfg.Listen.Port))
