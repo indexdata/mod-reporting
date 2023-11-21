@@ -53,14 +53,9 @@ func (server *ModReportingServer)Log(cat string, args ...string) {
 
 func (server *ModReportingServer) connectDb(url string, user string, pass string) error {
 	// For historical reasons, database connection configuration is often JDBCish
-	if pass != "x" {
-		// XXX until we have found an LDP/MetaDB database to connect to
-		return nil
-	}
-
+	return nil
 	dbUrl := strings.Replace(url, "jdbc:postgresql", "postgres", 1)
 	conn, err := pgx.Connect(context.Background(), dbUrl)
-	fmt.Println("got connection", conn, "and error", err)
 	if err != nil {
 		return err
 	}
@@ -97,6 +92,9 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 		return
 	} else if path == "/ldp/config" {
 		handleConfig(w, req, server)
+		return
+	} else if strings.HasPrefix(path, "/ldp/config/") {
+		handleConfigId(w, req, server)
 		return
 	} else {
 		// Unrecognized

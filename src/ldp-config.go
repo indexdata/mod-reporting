@@ -1,7 +1,95 @@
+// handle the /ldp/config and /ldp/config/{id} endpoints
 package main
 
+import "fmt"
 import "net/http"
+import "encoding/json"
+import "github.com/indexdata/foliogo"
 
+
+// Types for what we read from mod-settings
+
+type settingsItemGeneral struct {
+	Key string `json:"key"`
+	Value interface{}
+	// We don't care about id (irrelevant) or scope (always "ui-ldp.admin")
+}
+
+type settingsResultInfo struct {
+	TotalRecords int `json:"totalRecords"`
+	// We don't care about diagnostics
+}
+
+type settingsResponseGeneral struct {
+	Items []settingsItemGeneral `json:"items"`
+	ResultInfo settingsResultInfo `json:"resultInfo"`
+}
+
+
+// Types for what we return as /ldp/config
+
+type configItem struct {
+	Key string `json:"key"`
+	Tenant string `json:"tenant"`
+	Value interface{} `json:"value"`
+}
+
+type configResponse []configItem
+
+
+// The /ldp/config endpoint only supports GET, with no URL parameters
 func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
+	bytes, err := server.folioSession.Fetch(`settings/entries?query=scope=="ui-ldp.admin"`, foliogo.RequestParams{})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "could not fetch from mod-settings: %s", err)
+		return
+	}
+
+	var r settingsResponseGeneral
+	err = json.Unmarshal(bytes, &r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "could not deserialize JSON from mod-settings: %s", err)
+		return
+	}
+
+	// XXX in a system with many settings, we might get back less
+	// than the full set, in which case we'd need to using paging
+	// to accumulate them all. In practice, that's never going to
+	// happen. But we could look at resultInfo.totalRecords to
+	// determine whether this has happened.
+
+	tenant := server.folioSession.GetTenant()
+
+	config := make([]configItem, len(r.Items))
+	for i, item := range(r.Items) {
+		config[i] = configItem{
+			Key: item.Key,
+			Value: item.Value,
+			Tenant: tenant,
+		}
+	}
+
+	bytes, err = json.Marshal(config)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "could not serialize JSON: %s", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(bytes)
+	if err != nil {
+		// XXX Now what?
+		return
+	}
+
+	return
+}
+
+
+// The /ldp/config/{id} endpoint only GET and PUT
+func handleConfigId(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
