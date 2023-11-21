@@ -1,13 +1,15 @@
-// handle the /ldp/config and /ldp/config/{id} endpoints
+// handle the /ldp/config and /ldp/config/{key} endpoints
 package main
 
 import "fmt"
+import "strings"
 import "net/http"
 import "encoding/json"
 import "github.com/indexdata/foliogo"
 
 
 // Types for what we read from mod-settings
+// "General" here means not knowing the structure of the value
 
 type settingsItemGeneral struct {
 	Key string `json:"key"`
@@ -89,7 +91,47 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 }
 
 
-// The /ldp/config/{id} endpoint only GET and PUT
-func handleConfigId(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	w.WriteHeader(http.StatusNotImplemented)
+// The /ldp/config/{key} endpoint only GET and PUT
+func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
+	key := strings.Replace(req.URL.Path, "/ldp/config/", "", 1)
+	path := `settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`
+	bytes, err := server.folioSession.Fetch(path, foliogo.RequestParams{})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "could not fetch from mod-settings: %s", err)
+		return
+	}
+
+	var r settingsResponseGeneral
+	err = json.Unmarshal(bytes, &r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "could not deserialize JSON from mod-settings: %s", err)
+		return
+	}
+
+	if r.ResultInfo.TotalRecords < 1 {
+		// No config entry of that name
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "no config item with key '%s'", key)
+		return
+	}
+
+	item := r.Items[0]
+	tenant := server.folioSession.GetTenant()
+	config := configItem{
+		Key: item.Key,
+		Value: item.Value,
+		Tenant: tenant,
+	}
+
+	bytes, err = json.Marshal(config)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "could not serialize JSON: %s", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(bytes)
 }

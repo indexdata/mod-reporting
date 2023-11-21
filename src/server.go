@@ -94,7 +94,7 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 		handleConfig(w, req, server)
 		return
 	} else if strings.HasPrefix(path, "/ldp/config/") {
-		handleConfigId(w, req, server)
+		handleConfigKey(w, req, server)
 		return
 	} else {
 		// Unrecognized
