@@ -1,3 +1,4 @@
+fmt.Fprintf
 fmt.Fprintln
 (*os.File).Close
 (io.ReadCloser).Close

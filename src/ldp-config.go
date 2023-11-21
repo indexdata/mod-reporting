@@ -36,15 +36,13 @@ type configItem struct {
 	Value interface{} `json:"value"`
 }
 
-type configResponse []configItem
-
 
 // The /ldp/config endpoint only supports GET, with no URL parameters
 func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
 	bytes, err := server.folioSession.Fetch(`settings/entries?query=scope=="ui-ldp.admin"`, foliogo.RequestParams{})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "could not fetch from mod-settings: %s", err)
+		fmt.Fprintf(w, "could not fetch from mod-settings: %s", err)
 		return
 	}
 
@@ -52,7 +50,7 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "could not deserialize JSON from mod-settings: %s", err)
+		fmt.Fprintf(w, "could not deserialize JSON from mod-settings: %s", err)
 		return
 	}
 
@@ -76,7 +74,7 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 	bytes, err = json.Marshal(config)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "could not serialize JSON: %s", err)
+		fmt.Fprintf(w, "could not serialize JSON: %s", err)
 		return
 	}
 
@@ -92,7 +90,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 	bytes, err := server.folioSession.Fetch(path, foliogo.RequestParams{})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "could not fetch from mod-settings: %s", err)
+		fmt.Fprintf(w, "could not fetch from mod-settings: %s", err)
 		return
 	}
 
@@ -100,7 +98,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "could not deserialize JSON from mod-settings: %s", err)
+		fmt.Fprintf(w, "could not deserialize JSON from mod-settings: %s", err)
 		return
 	}
 
@@ -122,7 +120,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 	bytes, err = json.Marshal(config)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "could not serialize JSON: %s", err)
+		fmt.Fprintf(w, "could not serialize JSON: %s", err)
 		return
 	}
 
