@@ -53,9 +53,10 @@ func (server *ModReportingServer)Log(cat string, args ...string) {
 
 func (server *ModReportingServer) connectDb(url string, user string, pass string) error {
 	// For historical reasons, database connection configuration is often JDBCish
-	return nil
-	dbUrl := strings.Replace(url, "jdbc:postgresql", "postgres", 1)
-	conn, err := pgx.Connect(context.Background(), dbUrl)
+	url = strings.Replace(url, "jdbc:postgresql://", "", 1)
+	url = strings.Replace(url, "postgres://", "", 1)
+	// We may need `?sslmode=require` on the end of the URL.
+	conn, err := pgx.Connect(context.Background(), "postgres://" + user + ":" + pass + "@" + url)
 	if err != nil {
 		return err
 	}
