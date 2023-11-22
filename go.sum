@@ -9,6 +9,8 @@ github.com/indexdata/foliogo v0.1.0 h1:PhMyrSB61hRBz/xkT6vduSftZm1X4haUPBiCneBYm
 github.com/indexdata/foliogo v0.1.0/go.mod h1:Ot4VTsbcNTeS6YjorSi5XG3Vds8tzsdAqYFX9yddNPE=
 github.com/indexdata/foliogo v0.1.1 h1:Ce7N8l0XJTNd1/6ky79PLkGdpxtA3VVde1xtWF6BCZ0=
 github.com/indexdata/foliogo v0.1.1/go.mod h1:p8EOx+lBZcnNMftquXxRhgIIjrqd0+uqiY1l97qFu8I=
+github.com/indexdata/foliogo v0.1.2 h1:27J+s4nKhhw7av8SMn36KOF/2CU+G03pdxlgN08mVOk=
+github.com/indexdata/foliogo v0.1.2/go.mod h1:p8EOx+lBZcnNMftquXxRhgIIjrqd0+uqiY1l97qFu8I=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/Y25WS6cokEszi5g+S0QxI/d45PkRi7Nk=
