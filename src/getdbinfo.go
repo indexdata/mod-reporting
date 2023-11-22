@@ -34,7 +34,7 @@ func getDbInfo(session foliogo.Session) (string, string, string, error) {
 		return dburl, dbuser, dbpass, nil
 	}
 
-	bytes, err := session.Fetch(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="dbinfo"`, foliogo.RequestParams{})
+	bytes, err := session.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="dbinfo"`)
 	if err != nil {
 		return "", "", "", errors.New("cannot fetch 'dbinfo' from config: " + err.Error())
 	}
