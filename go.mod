@@ -4,7 +4,8 @@ go 1.21.3
 
 require (
 	github.com/MikeTaylor/catlogger v0.0.2
-	github.com/indexdata/foliogo v0.1.2
+	github.com/google/uuid v1.4.0
+	github.com/indexdata/foliogo v0.1.3
 	github.com/jackc/pgx/v5 v5.5.0
 )
 
