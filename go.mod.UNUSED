@@ -1,1 +1,1 @@
-replace github.com/indexdata/foliogo => ../foliogo
+go mod edit --replace github.com/indexdata/foliogo=../foliogo
