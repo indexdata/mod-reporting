@@ -107,11 +107,7 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 	var err error
 
 	if (req.Method == "PUT") {
-		bytes, err = writeConfigKey(w, req, server, key)
-		if err != nil {
-			return fmt.Errorf("could not write to mod-settings: %s", err)
-		}
-		return nil
+		return writeConfigKey(w, req, server, key)
 	}
 	
 	// Assume GET
@@ -154,16 +150,16 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 }
 
 
-func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer, key string) ([]byte, error) {
+func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer, key string) (error) {
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
-		return nil, fmt.Errorf("could not read HTTP request body: %s", err)
+		return fmt.Errorf("could not read HTTP request body: %s", err)
 	}
 
 	var item configItem
 	err = json.Unmarshal(bytes, &item)
 	if err != nil {
-		return nil, fmt.Errorf("could not deserialize JSON from body: %s", err)
+		return fmt.Errorf("could not deserialize JSON from body: %s", err)
 	}
 	// fmt.Println("item.Value =", item.Value)
 
@@ -172,12 +168,12 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return nil, fmt.Errorf("could not generate v4 UUID: %s", err)
+		return fmt.Errorf("could not generate v4 UUID: %s", err)
 	}
 
 	bytes, err = json.Marshal(item.Value)
 	if err != nil {
-		return nil, fmt.Errorf("could not serialize JSON for value: %s", err)
+		return fmt.Errorf("could not serialize JSON for value: %s", err)
 	}
 
 	var simpleSettingsItem map[string]interface{} = map[string]interface{}{
@@ -187,8 +183,20 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		"value": item.Value,
 	}
 	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
-	return server.folioSession.Fetch("settings/entries", foliogo.RequestParams{
+	bytes, err = server.folioSession.Fetch("settings/entries", foliogo.RequestParams{
 		Method: "POST",
 		Json: simpleSettingsItem,
 	})
+	if err != nil {
+		return fmt.Errorf("could not write to mod-settings: %s", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	bytes, err = json.Marshal(simpleSettingsItem)
+	if err != nil {
+		return fmt.Errorf("could not serialize JSON for response: %s", err)
+	}
+	_, err = w.Write(bytes)
+	return err
+
 }
