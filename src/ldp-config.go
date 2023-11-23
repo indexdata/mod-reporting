@@ -66,15 +66,9 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 	tenant := server.folioSession.GetTenant()
 	config := make([]configItem, len(r.Items))
 	for i, item := range(r.Items) {
-		valueString, err := json.Marshal(item.Value)
-		if (err != nil) {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "could not serialize JSON for value: %s", err)
-			return
-		}
 		config[i] = configItem{
 			Key: item.Key,
-			Value: string(valueString),
+			Value: item.Value.(string),
 			Tenant: tenant,
 		}
 	}
@@ -128,14 +122,9 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 
 	item := r.Items[0]
 	tenant := server.folioSession.GetTenant()
-	valueString, err := json.Marshal(item.Value)
-	if (err != nil) {
-		return fmt.Errorf("could not serialize JSON for value: %s", err)
-	}
-
 	config := configItem{
 		Key: item.Key,
-		Value: string(valueString),
+		Value: item.Value.(string),
 		Tenant: tenant,
 	}
 
