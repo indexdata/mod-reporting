@@ -105,24 +105,25 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 	key := strings.Replace(req.URL.Path, "/ldp/config/", "", 1)
 	var bytes []byte
 	var err error
-	var verb string
 
 	if (req.Method == "PUT") {
 		bytes, err = writeConfigKey(w, req, server, key)
-		verb = "write to"
-	} else {
-		// Assume GET
-		bytes, err = server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`)
-		verb = "read from"
+		if err != nil {
+			return fmt.Errorf("could not write to mod-settings: %s", err)
+		}
+		return nil
 	}
+	
+	// Assume GET
+	bytes, err = server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`)
 	if err != nil {
-		return fmt.Errorf("could not %s mod-settings: %s", verb, err)
+		return fmt.Errorf("could not read from mod-settings: %s", err)
 	}
 
 	var r settingsResponseGeneral
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
-		return fmt.Errorf("could not deserialize JSON from mod-settings: %s", err)
+		return fmt.Errorf("could not deserialize JSON %+v from mod-settings: %s", bytes, err)
 	}
 
 	if r.ResultInfo.TotalRecords < 1 {
