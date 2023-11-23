@@ -179,20 +179,6 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		return nil, fmt.Errorf("could not serialize JSON for value: %s", err)
 	}
 
-	/*
-	settingsItem := settingsItemGeneral{
-		Id: id.String(),
-		Scope: "ui-ldp.admin",
-		Key: key,
-		Value: "whatever", // string(bytes),
-	}
-	type simpleSettingsItem_t struct {
-		id string
-		scope string
-		key string
-		value string
-	}
-	*/
 	var simpleSettingsItem map[string]interface{} = map[string]interface{}{
 		"id": id.String(),
 		"scope": "ui-ldp.admin",
@@ -200,14 +186,6 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		"value": item.Value,
 	}
 	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
-	/*
-	bytes, err = json.Marshal(settingsItem)
-	if err != nil {
-		return nil, fmt.Errorf("could not serialize JSON: %s", err)
-	}
-	s := string(bytes)
-	fmt.Printf("serialized mod-settings JSON %s\n", s)
-	*/
 	return server.folioSession.Fetch("settings/entries", foliogo.RequestParams{
 		Method: "POST",
 		Json: simpleSettingsItem,
