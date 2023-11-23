@@ -163,12 +163,35 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 	}
 	// fmt.Println("item.Value =", item.Value)
 
-	// XXX For now, assume we're creating a new entry
-	// But we need to check if there is already an entry with this key
-
-	id, err := uuid.NewRandom()
+	// Irritatingly, the WSAPI for mod-settings is different if
+	// we're creating a new key from if we're replacing an
+	// existing one, so we need first to search for an existing
+	// record
+	bytes, err = server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`)
 	if err != nil {
-		return fmt.Errorf("could not generate v4 UUID: %s", err)
+		return fmt.Errorf("could not read from mod-settings: %s", err)
+	}
+
+	var r settingsResponseGeneral
+	err = json.Unmarshal(bytes, &r)
+	if err != nil {
+		return fmt.Errorf("could not deserialize JSON %+v from mod-settings: %s", bytes, err)
+	}
+
+	var id, method, path string
+	if r.ResultInfo.TotalRecords > 0 {
+		// We need to PUT to the existing record
+		id = r.Items[0].Id
+		method = "PUT"
+		path = "settings/entries/" + id
+	} else {
+		dumbId, err := uuid.NewRandom()
+		if err != nil {
+			return fmt.Errorf("could not generate v4 UUID: %s", err)
+		}
+		id = dumbId.String()
+		method = "POST"
+		path = "settings/entries"
 	}
 
 	bytes, err = json.Marshal(item.Value)
@@ -177,14 +200,14 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 	}
 
 	var simpleSettingsItem map[string]interface{} = map[string]interface{}{
-		"id": id.String(),
+		"id": id,
 		"scope": "ui-ldp.admin",
 		"key": key,
 		"value": item.Value,
 	}
 	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
-	bytes, err = server.folioSession.Fetch("settings/entries", foliogo.RequestParams{
-		Method: "POST",
+	bytes, err = server.folioSession.Fetch(path, foliogo.RequestParams{
+		Method: method,
 		Json: simpleSettingsItem,
 	})
 	if err != nil {
