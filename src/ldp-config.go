@@ -36,7 +36,7 @@ type settingsResponseGeneral struct {
 type configItem struct {
 	Key string `json:"key"`
 	Tenant string `json:"tenant"`
-	Value interface{} `json:"value"`
+	Value string `json:"value"`
 }
 
 
@@ -64,12 +64,17 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 	// determine whether this has happened.
 
 	tenant := server.folioSession.GetTenant()
-
 	config := make([]configItem, len(r.Items))
 	for i, item := range(r.Items) {
+		valueString, err := json.Marshal(item.Value)
+		if (err != nil) {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "could not serialize JSON for value: %s", err)
+			return
+		}
 		config[i] = configItem{
 			Key: item.Key,
-			Value: item.Value,
+			Value: string(valueString),
 			Tenant: tenant,
 		}
 	}
@@ -126,9 +131,14 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 
 	item := r.Items[0]
 	tenant := server.folioSession.GetTenant()
+	valueString, err := json.Marshal(item.Value)
+	if (err != nil) {
+		return fmt.Errorf("could not serialize JSON for value: %s", err)
+	}
+
 	config := configItem{
 		Key: item.Key,
-		Value: item.Value,
+		Value: string(valueString),
 		Tenant: tenant,
 	}
 
@@ -154,8 +164,7 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 	if err != nil {
 		return nil, fmt.Errorf("could not deserialize JSON from body: %s", err)
 	}
-	fmt.Printf("deserialized config JSON %+v\n", item)
-	fmt.Println("item.value =", item.Value.(string))
+	// fmt.Println("item.Value =", item.Value)
 
 	// XXX For now, assume we're creating a new entry
 	// But we need to check if there is already an entry with this key
@@ -165,19 +174,42 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		return nil, fmt.Errorf("could not generate v4 UUID: %s", err)
 	}
 
+	bytes, err = json.Marshal(item.Value)
+	if err != nil {
+		return nil, fmt.Errorf("could not serialize JSON for value: %s", err)
+	}
+
+	/*
 	settingsItem := settingsItemGeneral{
 		Id: id.String(),
 		Scope: "ui-ldp.admin",
 		Key: key,
-		Value: item.Value,
+		Value: "whatever", // string(bytes),
 	}
+	type simpleSettingsItem_t struct {
+		id string
+		scope string
+		key string
+		value string
+	}
+	*/
+	var simpleSettingsItem map[string]interface{} = map[string]interface{}{
+		"id": id.String(),
+		"scope": "ui-ldp.admin",
+		"key": key,
+		"value": item.Value,
+	}
+	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
+	/*
 	bytes, err = json.Marshal(settingsItem)
 	if err != nil {
 		return nil, fmt.Errorf("could not serialize JSON: %s", err)
 	}
-	fmt.Printf("serialized mod-settings JSON %+v\n", settingsItem)
+	s := string(bytes)
+	fmt.Printf("serialized mod-settings JSON %s\n", s)
+	*/
 	return server.folioSession.Fetch("settings/entries", foliogo.RequestParams{
 		Method: "POST",
-		Body: string(bytes),
+		Json: simpleSettingsItem,
 	})
 }
