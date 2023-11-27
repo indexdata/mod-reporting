@@ -66,9 +66,21 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 	tenant := server.folioSession.GetTenant()
 	config := make([]configItem, len(r.Items))
 	for i, item := range(r.Items) {
+		fmt.Printf("converting item %v\n", item)
+		value, ok := item.Value.(string)
+		if !ok {
+			// mod-settings can contain values of any type: needs serializing
+			bytes, err = json.Marshal(item.Value)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(w, "could not serialize value from mod-settings: %s", err)
+				return
+			}
+			value = string(bytes)
+		}
 		config[i] = configItem{
 			Key: item.Key,
-			Value: item.Value.(string),
+			Value: value,
 			Tenant: tenant,
 		}
 	}
