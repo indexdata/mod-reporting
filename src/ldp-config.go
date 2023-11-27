@@ -62,6 +62,25 @@ func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModR
 }
 
 
+func settingsItemToConfigItem(item settingsItemGeneral, tenant string) (configItem, error) {
+	value, ok := item.Value.(string)
+	if !ok {
+		// mod-settings can contain values of any type: needs serializing
+		bytes, err := json.Marshal(item.Value)
+		if err != nil {
+			return configItem{}, fmt.Errorf("could not serialize value from mod-settings: %s", err)
+		}
+		value = string(bytes)
+	}
+	ci := configItem{
+		Key: item.Key,
+		Value: value,
+		Tenant: tenant,
+	}
+	return ci, nil
+}
+
+
 // The /ldp/config endpoint only supports GET, with no URL parameters
 func underlyingHandleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
 	bytes, err := server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"`)
@@ -84,20 +103,9 @@ func underlyingHandleConfig(w http.ResponseWriter, req *http.Request, server *Mo
 	tenant := server.folioSession.GetTenant()
 	config := make([]configItem, len(r.Items))
 	for i, item := range(r.Items) {
-		fmt.Printf("converting item %v\n", item)
-		value, ok := item.Value.(string)
-		if !ok {
-			// mod-settings can contain values of any type: needs serializing
-			bytes, err = json.Marshal(item.Value)
-			if err != nil {
-				return fmt.Errorf("could not serialize value from mod-settings: %s", err)
-			}
-			value = string(bytes)
-		}
-		config[i] = configItem{
-			Key: item.Key,
-			Value: value,
-			Tenant: tenant,
+		config[i], err = settingsItemToConfigItem(item, tenant)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -140,10 +148,9 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 
 	item := r.Items[0]
 	tenant := server.folioSession.GetTenant()
-	config := configItem{
-		Key: item.Key,
-		Value: item.Value.(string),
-		Tenant: tenant,
+	config, err := settingsItemToConfigItem(item, tenant)
+	if err != nil {
+		return err
 	}
 
 	bytes, err = json.Marshal(config)
