@@ -160,7 +160,7 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(bytes)
-	return nil
+	return err
 }
 
 
@@ -199,18 +199,13 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		method = "PUT"
 		path = "settings/entries/" + id
 	} else {
-		dumbId, err := uuid.NewRandom()
-		if err != nil {
-			return fmt.Errorf("could not generate v4 UUID: %s", err)
+		dumbId, err2 := uuid.NewRandom()
+		if err2 != nil {
+			return fmt.Errorf("could not generate v4 UUID: %s", err2)
 		}
 		id = dumbId.String()
 		method = "POST"
 		path = "settings/entries"
-	}
-
-	bytes, err = json.Marshal(item.Value)
-	if err != nil {
-		return fmt.Errorf("could not serialize JSON for value: %s", err)
 	}
 
 	var simpleSettingsItem map[string]interface{} = map[string]interface{}{
@@ -220,7 +215,7 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		"value": item.Value,
 	}
 	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
-	bytes, err = server.folioSession.Fetch(path, foliogo.RequestParams{
+	_, err = server.folioSession.Fetch(path, foliogo.RequestParams{
 		Method: method,
 		Json: simpleSettingsItem,
 	})
