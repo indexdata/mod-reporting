@@ -40,21 +40,26 @@ type configItem struct {
 }
 
 
-// The /ldp/config endpoint only supports GET, with no URL parameters
 func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	bytes, err := server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"`)
+	err := underlyingHandleConfig(w, req, server)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "could not fetch from mod-settings: %s", err)
-		return
+		fmt.Fprintln(w, err.Error())
+	}
+}
+
+
+// The /ldp/config endpoint only supports GET, with no URL parameters
+func underlyingHandleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+	bytes, err := server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"`)
+	if err != nil {
+		return fmt.Errorf("could not fetch from mod-settings: %s", err)
 	}
 
 	var r settingsResponseGeneral
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "could not deserialize JSON from mod-settings: %s", err)
-		return
+		return fmt.Errorf("could not deserialize JSON from mod-settings: %s", err)
 	}
 
 	// XXX in a system with many settings, we might get back less
@@ -72,9 +77,7 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 			// mod-settings can contain values of any type: needs serializing
 			bytes, err = json.Marshal(item.Value)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, "could not serialize value from mod-settings: %s", err)
-				return
+				return fmt.Errorf("could not serialize value from mod-settings: %s", err)
 			}
 			value = string(bytes)
 		}
@@ -87,13 +90,12 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 
 	bytes, err = json.Marshal(config)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "could not serialize JSON: %s", err)
-		return
+		return fmt.Errorf("could not serialize JSON: %s", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(bytes)
+	return nil
 }
 
 
