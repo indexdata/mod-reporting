@@ -40,8 +40,21 @@ type configItem struct {
 }
 
 
+type handlerFn func(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error;
+
+
 func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	err := underlyingHandleConfig(w, req, server)
+	runWithErrorHandling(w, req, server, underlyingHandleConfig)
+}
+
+
+func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
+	runWithErrorHandling(w, req, server, underlyingHandleConfigKey)
+}
+
+
+func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModReportingServer, f handlerFn) {
+	err := f(w, req, server)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, err.Error())
@@ -96,15 +109,6 @@ func underlyingHandleConfig(w http.ResponseWriter, req *http.Request, server *Mo
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(bytes)
 	return nil
-}
-
-
-func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	err := underlyingHandleConfigKey(w, req, server)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, err.Error())
-	}
 }
 
 
