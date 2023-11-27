@@ -40,21 +40,58 @@ type configItem struct {
 }
 
 
-// The /ldp/config endpoint only supports GET, with no URL parameters
+type handlerFn func(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error;
+
+
 func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	bytes, err := server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"`)
+	runWithErrorHandling(w, req, server, underlyingHandleConfig)
+}
+
+
+func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
+	runWithErrorHandling(w, req, server, underlyingHandleConfigKey)
+}
+
+
+func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModReportingServer, f handlerFn) {
+	err := f(w, req, server)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "could not fetch from mod-settings: %s", err)
-		return
+		fmt.Fprintln(w, err.Error())
+	}
+}
+
+
+func settingsItemToConfigItem(item settingsItemGeneral, tenant string) (configItem, error) {
+	value, ok := item.Value.(string)
+	if !ok {
+		// mod-settings can contain values of any type: needs serializing
+		bytes, err := json.Marshal(item.Value)
+		if err != nil {
+			return configItem{}, fmt.Errorf("could not serialize value from mod-settings: %s", err)
+		}
+		value = string(bytes)
+	}
+	ci := configItem{
+		Key: item.Key,
+		Value: value,
+		Tenant: tenant,
+	}
+	return ci, nil
+}
+
+
+// The /ldp/config endpoint only supports GET, with no URL parameters
+func underlyingHandleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+	bytes, err := server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"`)
+	if err != nil {
+		return fmt.Errorf("could not fetch from mod-settings: %s", err)
 	}
 
 	var r settingsResponseGeneral
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "could not deserialize JSON from mod-settings: %s", err)
-		return
+		return fmt.Errorf("could not deserialize JSON from mod-settings: %s", err)
 	}
 
 	// XXX in a system with many settings, we might get back less
@@ -66,31 +103,20 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 	tenant := server.folioSession.GetTenant()
 	config := make([]configItem, len(r.Items))
 	for i, item := range(r.Items) {
-		config[i] = configItem{
-			Key: item.Key,
-			Value: item.Value.(string),
-			Tenant: tenant,
+		config[i], err = settingsItemToConfigItem(item, tenant)
+		if err != nil {
+			return err
 		}
 	}
 
 	bytes, err = json.Marshal(config)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "could not serialize JSON: %s", err)
-		return
+		return fmt.Errorf("could not serialize JSON: %s", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(bytes)
-}
-
-
-func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	err := underlyingHandleConfigKey(w, req, server)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, err.Error())
-	}
+	return nil
 }
 
 
@@ -122,10 +148,9 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 
 	item := r.Items[0]
 	tenant := server.folioSession.GetTenant()
-	config := configItem{
-		Key: item.Key,
-		Value: item.Value.(string),
-		Tenant: tenant,
+	config, err := settingsItemToConfigItem(item, tenant)
+	if err != nil {
+		return err
 	}
 
 	bytes, err = json.Marshal(config)
@@ -135,7 +160,7 @@ func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server 
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(bytes)
-	return nil
+	return err
 }
 
 
@@ -174,18 +199,13 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		method = "PUT"
 		path = "settings/entries/" + id
 	} else {
-		dumbId, err := uuid.NewRandom()
-		if err != nil {
-			return fmt.Errorf("could not generate v4 UUID: %s", err)
+		dumbId, err2 := uuid.NewRandom()
+		if err2 != nil {
+			return fmt.Errorf("could not generate v4 UUID: %s", err2)
 		}
 		id = dumbId.String()
 		method = "POST"
 		path = "settings/entries"
-	}
-
-	bytes, err = json.Marshal(item.Value)
-	if err != nil {
-		return fmt.Errorf("could not serialize JSON for value: %s", err)
 	}
 
 	var simpleSettingsItem map[string]interface{} = map[string]interface{}{
@@ -195,7 +215,7 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		"value": item.Value,
 	}
 	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
-	bytes, err = server.folioSession.Fetch(path, foliogo.RequestParams{
+	_, err = server.folioSession.Fetch(path, foliogo.RequestParams{
 		Method: method,
 		Json: simpleSettingsItem,
 	})
