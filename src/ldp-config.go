@@ -20,14 +20,14 @@ type settingsItemGeneral struct {
 	Value interface{}
 }
 
-type settingsResultInfo struct {
+type settingsResultInfoGeneral struct {
 	TotalRecords int `json:"totalRecords"`
 	// We don't care about diagnostics
 }
 
 type settingsResponseGeneral struct {
 	Items []settingsItemGeneral `json:"items"`
-	ResultInfo settingsResultInfo `json:"resultInfo"`
+	ResultInfo settingsResultInfoGeneral `json:"resultInfo"`
 }
 
 

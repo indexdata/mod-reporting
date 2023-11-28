@@ -6,23 +6,23 @@ import "encoding/json"
 import "github.com/indexdata/foliogo"
 
 
-type value struct {
+type settingsValue struct {
 	Url string `json:"url"`
 	Pass string `json:"pass"`
 	User string `json:"user"`
 }
 
-type item struct {
-	Value value `json:"value"`
+type settingsItem struct {
+	Value settingsValue `json:"value"`
 }
 
-type resultInfo struct {
+type settingsResultInfo struct {
 	TotalRecords int `json:"totalRecords"`
 }
 
-type response struct {
-	Items []item `json:"items"`
-	ResultInfo resultInfo `json:"resultInfo"`
+type settingsResponse struct {
+	Items []settingsItem `json:"items"`
+	ResultInfo settingsResultInfo `json:"resultInfo"`
 }
 
 func getDbInfo(session foliogo.Session) (string, string, string, error) {
@@ -39,7 +39,7 @@ func getDbInfo(session foliogo.Session) (string, string, string, error) {
 		return "", "", "", errors.New("cannot fetch 'dbinfo' from config: " + err.Error())
 	}
 
-	var r response
+	var r settingsResponse
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
 		return "", "", "", errors.New("decode 'dbinfo' JSON failed: " + err.Error())
