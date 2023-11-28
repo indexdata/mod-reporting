@@ -40,28 +40,6 @@ type configItem struct {
 }
 
 
-type handlerFn func(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error;
-
-
-func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	runWithErrorHandling(w, req, server, underlyingHandleConfig)
-}
-
-
-func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	runWithErrorHandling(w, req, server, underlyingHandleConfigKey)
-}
-
-
-func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModReportingServer, f handlerFn) {
-	err := f(w, req, server)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, err.Error())
-	}
-}
-
-
 func settingsItemToConfigItem(item settingsItemGeneral, tenant string) (configItem, error) {
 	value, ok := item.Value.(string)
 	if !ok {
@@ -82,7 +60,7 @@ func settingsItemToConfigItem(item settingsItemGeneral, tenant string) (configIt
 
 
 // The /ldp/config endpoint only supports GET, with no URL parameters
-func underlyingHandleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
 	bytes, err := server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"`)
 	if err != nil {
 		return fmt.Errorf("could not fetch from mod-settings: %s", err)
@@ -121,7 +99,7 @@ func underlyingHandleConfig(w http.ResponseWriter, req *http.Request, server *Mo
 
 
 // The /ldp/config/{key} endpoint only supports GET and PUT
-func underlyingHandleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
 	key := strings.Replace(req.URL.Path, "/ldp/config/", "", 1)
 	var bytes []byte
 	var err error

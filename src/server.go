@@ -10,6 +10,9 @@ import "github.com/indexdata/foliogo"
 import "github.com/jackc/pgx/v5"
 
 
+type handlerFn func(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error;
+
+
 type ModReportingServer struct {
 	config *config
 	logger *catlogger.Logger
@@ -18,6 +21,7 @@ type ModReportingServer struct {
 	server http.Server
 	dbConn *pgx.Conn
 }
+
 
 func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string, folioSession foliogo.Session) *ModReportingServer {
 	tr := &http.Transport{}
@@ -92,14 +96,21 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 		fmt.Fprintln(w, "Behold! I live!!")
 		return
 	} else if path == "/ldp/config" {
-		handleConfig(w, req, server)
-		return
+		runWithErrorHandling(w, req, server, handleConfig)
 	} else if strings.HasPrefix(path, "/ldp/config/") {
-		handleConfigKey(w, req, server)
-		return
+		runWithErrorHandling(w, req, server, handleConfigKey)
 	} else {
 		// Unrecognized
 		fmt.Fprintln(w, "Not found")
 		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+
+func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModReportingServer, f handlerFn) {
+	err := f(w, req, server)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, err.Error())
 	}
 }
