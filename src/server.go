@@ -91,10 +91,8 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
   <li><a href="/htdocs/">Static area</a></li>
   <li><a href="/ldp/config">Legacy configuration WSAPI</a></li>
 </ul>`)
-		return
 	} else if path == "/admin/health" {
 		fmt.Fprintln(w, "Behold! I live!!")
-		return
 	} else if path == "/ldp/config" {
 		runWithErrorHandling(w, req, server, handleConfig)
 	} else if strings.HasPrefix(path, "/ldp/config/") {
