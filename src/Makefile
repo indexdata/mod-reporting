@@ -4,7 +4,7 @@ $(TARGET): main.go config-file.go getdbinfo.go http-error.go server.go ldp-confi
 	go build -o $@
 
 run: $(TARGET)
-	cd ..; env LOGCAT=listen,op,curl,status,response,db OKAPI_URL=https://folio-snapshot-okapi.dev.folio.org OKAPI_TENANT=diku OKAPI_USER=diku_admin src/$(TARGET) etc/config.json
+	cd ..; env LOGCAT=listen,path,db,op,curl,status,response OKAPI_URL=https://folio-snapshot-okapi.dev.folio.org OKAPI_TENANT=diku OKAPI_USER=diku_admin src/$(TARGET) etc/config.json
 
 lint:
 	-go vet ./...
