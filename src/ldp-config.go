@@ -104,7 +104,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 	var bytes []byte
 	var err error
 
-	if (req.Method == "PUT") {
+	if req.Method == "PUT" {
 		return writeConfigKey(w, req, server, key)
 	}
 
