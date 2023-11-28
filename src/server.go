@@ -99,6 +99,7 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 		return
 	} else {
 		// Unrecognized
+		fmt.Fprintln(w, "Not found")
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
