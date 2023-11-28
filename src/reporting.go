@@ -9,17 +9,17 @@ import "github.com/jackc/pgx/v5/pgxpool"
 
 
 type dbTable struct {
-	SchemaName string `db:"schema_name"`
-	TableName string `db:"table_name"`
+	SchemaName string `db:"schema_name" json:"schemaName"`
+	TableName string `db:"table_name" json:"tableName"`
 }
 
 type dbColumn struct {
-	ColumnName string `db:"column_name"`
-	DataType string `db:"data_type"`
+	ColumnName string `db:"column_name" json:"columnName"`
+	DataType string `db:"data_type" json:"data_type"`
 	// TableCatalog string `db:"table_catalog"`
-	TableSchema string `db:"table_schema"`
-	TableName string `db:"table_name"`
-	OrdinalPosition string `db:"ordinal_position"`
+	TableSchema string `db:"table_schema" json:"tableSchema"`
+	TableName string `db:"table_name" json:"tableName"`
+	OrdinalPosition string `db:"ordinal_position" json:"ordinalPosition"`
 	// ColumnDefault string `db:"column_default"`
 	// IsNullable string `db:"is_nullable"`
 	// CharacterMaximumLength string `db:"character_maximum_length"`
