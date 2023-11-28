@@ -7,7 +7,7 @@ import "time"
 import "strings"
 import "github.com/MikeTaylor/catlogger"
 import "github.com/indexdata/foliogo"
-import "github.com/jackc/pgx/v5"
+import "github.com/jackc/pgx/v5/pgxpool"
 
 
 type handlerFn func(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error;
@@ -19,7 +19,7 @@ type ModReportingServer struct {
 	root string
 	folioSession foliogo.Session
 	server http.Server
-	dbConn *pgx.Conn
+	dbConn *pgxpool.Pool
 }
 
 
@@ -60,7 +60,7 @@ func (server *ModReportingServer) connectDb(url string, user string, pass string
 	url = strings.Replace(url, "jdbc:postgresql://", "", 1)
 	url = strings.Replace(url, "postgres://", "", 1)
 	// We may need `?sslmode=require` on the end of the URL.
-	conn, err := pgx.Connect(context.Background(), "postgres://" + user + ":" + pass + "@" + url)
+	conn, err := pgxpool.New(context.Background(), "postgres://" + user + ":" + pass + "@" + url)
 	if err != nil {
 		return err
 	}
