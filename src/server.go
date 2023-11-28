@@ -90,6 +90,7 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
   <li><a href="/admin/health">Health check</a></li>
   <li><a href="/htdocs/">Static area</a></li>
   <li><a href="/ldp/config">Legacy configuration WSAPI</a></li>
+  <li><a href="/db/tables">List tables from reporting database</a></li>
 </ul>`)
 	} else if path == "/admin/health" {
 		fmt.Fprintln(w, "Behold! I live!!")
@@ -97,6 +98,8 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 		runWithErrorHandling(w, req, server, handleConfig)
 	} else if strings.HasPrefix(path, "/ldp/config/") {
 		runWithErrorHandling(w, req, server, handleConfigKey)
+	} else if strings.HasPrefix(path, "/db/tables") {
+		runWithErrorHandling(w, req, server, handleTables)
 	} else {
 		// Unrecognized
 		fmt.Fprintln(w, "Not found")
