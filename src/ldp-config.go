@@ -107,7 +107,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 	if (req.Method == "PUT") {
 		return writeConfigKey(w, req, server, key)
 	}
-	
+
 	// Assume GET
 	bytes, err = server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`)
 	if err != nil {
