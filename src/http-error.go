@@ -1,5 +1,6 @@
 package main
 
+/*
 import "fmt"
 
 type httpError struct {
@@ -14,3 +15,4 @@ func MakeHttpError(status int, message string) *httpError {
 func (err httpError) String() string {
 	return fmt.Sprintf("HTTP error %d: %s", err.status, err.message)
 }
+*/
