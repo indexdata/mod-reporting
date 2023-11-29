@@ -81,10 +81,10 @@ func fetchTables(dbConn *pgxpool.Pool) ([]dbTable, error) {
 	// XXX This is hardwired to MetaDB: we should also support LDP Classic
 	query := "SELECT schema_name, table_name FROM metadb.base_table"
 	rows, err := dbConn.Query(context.Background(), query)
-	defer rows.Close()
 	if err != nil {
 		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
 	}
+	defer rows.Close()
 
 	return pgx.CollectRows(rows, pgx.RowToStructByName[dbTable])
 }
@@ -120,10 +120,10 @@ func fetchColumns(dbConn *pgxpool.Pool, schema string, table string) ([]dbColumn
 	query := "SELECT " + cols + " FROM information_schema.columns " +
 		"WHERE table_schema = $1 AND table_name = $2 AND column_name != $3";
 	rows, err := dbConn.Query(context.Background(), query, schema, table, "data")
-	defer rows.Close()
 	if err != nil {
 		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
 	}
+	defer rows.Close()
 
 	return pgx.CollectRows(rows, pgx.RowToStructByName[dbColumn])
 }
@@ -154,8 +154,6 @@ type jsonQuery struct {
 	Tables []queryTable `json:"tables"`
 }
 
-type queryRecord map[string]any
-
 
 func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
 	bytes, err := io.ReadAll(req.Body)
@@ -182,6 +180,19 @@ func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingS
 	result, err := pgx.CollectRows(rows, pgx.RowToMap)
 	if err != nil {
 		return fmt.Errorf("could not collect query result data: %w", err)
+	}
+
+	// Fix up types
+	for _, rec := range result {
+		for key, val := range rec {
+			switch v := val.(type) {
+			case [16]uint8:
+				// This is how pgx represents fields of type "uuid"
+				rec[key] = fmt.Sprintf("%x-%x-%x-%x-%x", v[0:4], v[4:6], v[6:8], v[8:10], v[10:16])
+			default:
+				// Nothing to do
+			}
+		}
 	}
 
 	// XXX From here on, we should share code with handleTables and handleColumns
