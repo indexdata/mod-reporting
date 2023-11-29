@@ -2,6 +2,7 @@ package main
 
 import "context"
 import "io"
+import "strings"
 import "fmt"
 import "net/http"
 import "encoding/json"
@@ -153,6 +154,7 @@ type jsonQuery struct {
 	Tables []queryTable `json:"tables"`
 }
 
+
 func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -163,6 +165,91 @@ func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingS
 	if err != nil {
 		return fmt.Errorf("could not deserialize JSON from body: %w", err)
 	}
-	fmt.Println("query =", query)
+
+	sql, err := makeSql(query)
+	if err != nil {
+		return fmt.Errorf("could not generate SQL from JSON query: %w", err)
+	}
+
+	server.Log("sql", sql)
 	return nil
+}
+
+
+func makeSql(query jsonQuery) (string, error) {
+	if len(query.Tables) != 1 {
+		return "", fmt.Errorf("query must have exactly one table")
+	}
+	qt := query.Tables[0]
+
+	sql := "SELECT " + makeColumns(qt.Columns) + ` FROM "` + qt.Schema + `"."` + qt.Table + `"`
+	if len(qt.Filters) > 0 {
+		sql += " WHERE " + makeCond(qt.Filters)
+	}
+	if len(qt.Order) > 0 {
+		sql += " ORDER BY " + makeOrder(qt.Order)
+	}
+	if qt.Limit != 0 {
+		sql += fmt.Sprintf(" LIMIT %d", qt.Limit)
+	}
+
+	return sql, nil
+}
+
+
+func makeColumns(cols []string) string {
+	if len(cols) == 0 {
+		return "*"
+	}
+
+	s := ""
+	for i, col := range(cols) {
+		s += col
+		if i < len(cols)-1 {
+			s += ", "
+		}
+	}
+
+	return s
+}
+
+
+func makeCond(filters []queryFilter) string {
+	s := ""
+	for i, filter := range(filters) {
+		s += filter.Key
+		if filter.Op == "" {
+			s += " = "
+		} else {
+			s += " " + filter.Op + " "
+		}
+		s += fmt.Sprintf("$%d", i+1)
+		if i < len(filters)-1 {
+			s += " AND "
+		}
+	}
+
+	return s
+}
+
+
+func makeOrder(orders []queryOrder) string {
+	s := ""
+	for i, order := range(orders) {
+		s += order.Key
+		s += " " + order.Direction
+		// Historically, ui-ldp sends "start" or "end"
+		// But we also want to support PostgreSQL's own "FIRST" and "LAST"
+		if strings.EqualFold(order.Nulls, "first") ||
+			strings.EqualFold(order.Nulls, "start") {
+			s += " NULLS FIRST"
+		} else {
+			s += " NULLS LAST"
+		}
+		if i < len(orders)-1 {
+			s += ", "
+		}
+	}
+
+	return s
 }
