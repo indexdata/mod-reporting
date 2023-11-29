@@ -116,5 +116,6 @@ func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModR
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, err.Error())
+		server.Log("error", fmt.Sprintf("%s: %s", req.RequestURI, err.Error()))
 	}
 }
