@@ -46,7 +46,7 @@ func settingsItemToConfigItem(item settingsItemGeneral, tenant string) (configIt
 		// mod-settings can contain values of any type: needs serializing
 		bytes, err := json.Marshal(item.Value)
 		if err != nil {
-			return configItem{}, fmt.Errorf("could not serialize value from mod-settings: %s", err)
+			return configItem{}, fmt.Errorf("could not serialize value from mod-settings: %w", err)
 		}
 		value = string(bytes)
 	}
@@ -63,13 +63,13 @@ func settingsItemToConfigItem(item settingsItemGeneral, tenant string) (configIt
 func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
 	bytes, err := server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"`)
 	if err != nil {
-		return fmt.Errorf("could not fetch from mod-settings: %s", err)
+		return fmt.Errorf("could not fetch from mod-settings: %w", err)
 	}
 
 	var r settingsResponseGeneral
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
-		return fmt.Errorf("could not deserialize JSON from mod-settings: %s", err)
+		return fmt.Errorf("could not deserialize JSON from mod-settings: %w", err)
 	}
 
 	// XXX in a system with many settings, we might get back less
@@ -89,7 +89,7 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 
 	bytes, err = json.Marshal(config)
 	if err != nil {
-		return fmt.Errorf("could not serialize JSON: %s", err)
+		return fmt.Errorf("could not serialize JSON: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -111,17 +111,17 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 	// Assume GET
 	bytes, err = server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`)
 	if err != nil {
-		return fmt.Errorf("could not read from mod-settings: %s", err)
+		return fmt.Errorf("could not read from mod-settings: %w", err)
 	}
 
 	var r settingsResponseGeneral
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
-		return fmt.Errorf("could not deserialize JSON %+v from mod-settings: %s", bytes, err)
+		return fmt.Errorf("could not deserialize JSON %+v from mod-settings: %w", bytes, err)
 	}
 
 	if r.ResultInfo.TotalRecords < 1 {
-		return fmt.Errorf("no config item with key '%s'", key)
+		return fmt.Errorf("no config item with key '%w'", key)
 	}
 
 	item := r.Items[0]
@@ -133,7 +133,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 
 	bytes, err = json.Marshal(config)
 	if err != nil {
-		return fmt.Errorf("could not serialize JSON: %s", err)
+		return fmt.Errorf("could not serialize JSON: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -145,13 +145,13 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer, key string) (error) {
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
-		return fmt.Errorf("could not read HTTP request body: %s", err)
+		return fmt.Errorf("could not read HTTP request body: %w", err)
 	}
 
 	var item configItem
 	err = json.Unmarshal(bytes, &item)
 	if err != nil {
-		return fmt.Errorf("could not deserialize JSON from body: %s", err)
+		return fmt.Errorf("could not deserialize JSON from body: %w", err)
 	}
 	// fmt.Println("item.Value =", item.Value)
 
@@ -161,13 +161,13 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 	// record
 	bytes, err = server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`)
 	if err != nil {
-		return fmt.Errorf("could not read from mod-settings: %s", err)
+		return fmt.Errorf("could not read from mod-settings: %w", err)
 	}
 
 	var r settingsResponseGeneral
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
-		return fmt.Errorf("could not deserialize JSON %+v from mod-settings: %s", bytes, err)
+		return fmt.Errorf("could not deserialize JSON %+v from mod-settings: %w", bytes, err)
 	}
 
 	var id, method, path string
@@ -179,7 +179,7 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 	} else {
 		dumbId, err2 := uuid.NewRandom()
 		if err2 != nil {
-			return fmt.Errorf("could not generate v4 UUID: %s", err2)
+			return fmt.Errorf("could not generate v4 UUID: %w", err2)
 		}
 		id = dumbId.String()
 		method = "POST"
@@ -198,13 +198,13 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		Json: simpleSettingsItem,
 	})
 	if err != nil {
-		return fmt.Errorf("could not write to mod-settings: %s", err)
+		return fmt.Errorf("could not write to mod-settings: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	bytes, err = json.Marshal(simpleSettingsItem)
 	if err != nil {
-		return fmt.Errorf("could not serialize JSON for response: %s", err)
+		return fmt.Errorf("could not serialize JSON for response: %w", err)
 	}
 	_, err = w.Write(bytes)
 	return err

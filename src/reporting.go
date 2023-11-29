@@ -61,12 +61,12 @@ type dbColumn struct {
 func handleTables(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
 	tables, err := fetchTables(server.dbConn)
 	if err != nil {
-		return fmt.Errorf("could not fetch tables from reporting DB: %s", err)
+		return fmt.Errorf("could not fetch tables from reporting DB: %w", err)
 	}
 
 	bytes, err := json.Marshal(tables)
 	if err != nil {
-		return fmt.Errorf("could not encode JSON for tables: %s", err)
+		return fmt.Errorf("could not encode JSON for tables: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -81,7 +81,7 @@ func fetchTables(dbConn *pgxpool.Pool) ([]dbTable, error) {
 	rows, err := dbConn.Query(context.Background(), query)
 	defer rows.Close()
 	if err != nil {
-		return nil, fmt.Errorf("could not run query '%s': %s", query, err)
+		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
 	}
 
 	return pgx.CollectRows(rows, pgx.RowToStructByName[dbTable])
@@ -98,12 +98,12 @@ func handleColumns(w http.ResponseWriter, req *http.Request, server *ModReportin
 
 	columns, err := fetchColumns(server.dbConn, schema, table)
 	if err != nil {
-		return fmt.Errorf("could not fetch columns from reporting DB: %s", err)
+		return fmt.Errorf("could not fetch columns from reporting DB: %w", err)
 	}
 
 	bytes, err := json.Marshal(columns)
 	if err != nil {
-		return fmt.Errorf("could not encode JSON for columns: %s", err)
+		return fmt.Errorf("could not encode JSON for columns: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -120,7 +120,7 @@ func fetchColumns(dbConn *pgxpool.Pool, schema string, table string) ([]dbColumn
 	rows, err := dbConn.Query(context.Background(), query, schema, table, "data")
 	defer rows.Close()
 	if err != nil {
-		return nil, fmt.Errorf("could not run query '%s': %s", query, err)
+		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
 	}
 
 	return pgx.CollectRows(rows, pgx.RowToStructByName[dbColumn])
