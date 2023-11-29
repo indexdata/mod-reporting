@@ -154,6 +154,8 @@ type jsonQuery struct {
 	Tables []queryTable `json:"tables"`
 }
 
+type queryRecord map[string]any
+
 
 func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
 	bytes, err := io.ReadAll(req.Body)
@@ -172,11 +174,29 @@ func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingS
 	}
 
 	server.Log("sql", sql, fmt.Sprintf("%v", params))
-	return nil
+	rows, err := server.dbConn.Query(context.Background(), sql, params...)
+	if err != nil {
+		return fmt.Errorf("could not execute SQL from JSON query: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToMap)
+	if err != nil {
+		return fmt.Errorf("could not collect query result data: %w", err)
+	}
+
+	// XXX From here on, we should share code with handleTables and handleColumns
+	bytes, err = json.Marshal(result)
+	if err != nil {
+		return fmt.Errorf("could not encode JSON for query result: %w", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(bytes)
+	return err
 }
 
 
-func makeSql(query jsonQuery) (string, []string, error) {
+func makeSql(query jsonQuery) (string, []any, error) {
 	if len(query.Tables) != 1 {
 		return "", nil, fmt.Errorf("query must have exactly one table")
 	}
@@ -186,7 +206,7 @@ func makeSql(query jsonQuery) (string, []string, error) {
 	if len(qt.Filters) > 0 {
 		sql += " WHERE " + makeCond(qt.Filters)
 	}
-	params := make([]string, len(qt.Filters))
+	params := make([]any, len(qt.Filters))
 	for i, val := range(qt.Filters) {
 		params[i] = val.Value
 	}
