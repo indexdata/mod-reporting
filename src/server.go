@@ -105,8 +105,8 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 		runWithErrorHandling(w, req, server, handleColumns)
 	} else {
 		// Unrecognized
-		fmt.Fprintln(w, "Not found")
 		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "Not found")
 	}
 }
 
