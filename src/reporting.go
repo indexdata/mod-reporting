@@ -1,6 +1,7 @@
 package main
 
 import "context"
+import "io"
 import "fmt"
 import "net/http"
 import "encoding/json"
@@ -124,4 +125,44 @@ func fetchColumns(dbConn *pgxpool.Pool, schema string, table string) ([]dbColumn
 	}
 
 	return pgx.CollectRows(rows, pgx.RowToStructByName[dbColumn])
+}
+
+
+type queryFilter struct {
+	Key string `json:"key"`
+	Op string `json:"op"`
+	Value string `json:"value"`
+}
+
+type queryOrder struct {
+	Key string `json:"key"`
+	Direction string `json:"direction"`
+	Nulls string `json:"nulls"`
+}
+
+type queryTable struct {
+	Schema string `json:"schema"`
+	Table string `json:"tableName"`
+	Filters []queryFilter `json:"columnFilters"`
+	Columns []string `json:"showColumns"`
+	Order []queryOrder `json:"orderBy"`
+	Limit int `json:"limit"`
+}
+
+type jsonQuery struct {
+	Tables []queryTable `json:"tables"`
+}
+
+func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+	bytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		return fmt.Errorf("could not read HTTP request body: %w", err)
+	}
+	var query jsonQuery
+	err = json.Unmarshal(bytes, &query)
+	if err != nil {
+		return fmt.Errorf("could not deserialize JSON from body: %w", err)
+	}
+	fmt.Println("query =", query)
+	return nil
 }
