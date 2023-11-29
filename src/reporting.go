@@ -166,25 +166,29 @@ func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingS
 		return fmt.Errorf("could not deserialize JSON from body: %w", err)
 	}
 
-	sql, err := makeSql(query)
+	sql, params, err := makeSql(query)
 	if err != nil {
 		return fmt.Errorf("could not generate SQL from JSON query: %w", err)
 	}
 
-	server.Log("sql", sql)
+	server.Log("sql", sql, fmt.Sprintf("%v", params))
 	return nil
 }
 
 
-func makeSql(query jsonQuery) (string, error) {
+func makeSql(query jsonQuery) (string, []string, error) {
 	if len(query.Tables) != 1 {
-		return "", fmt.Errorf("query must have exactly one table")
+		return "", nil, fmt.Errorf("query must have exactly one table")
 	}
 	qt := query.Tables[0]
 
 	sql := "SELECT " + makeColumns(qt.Columns) + ` FROM "` + qt.Schema + `"."` + qt.Table + `"`
 	if len(qt.Filters) > 0 {
 		sql += " WHERE " + makeCond(qt.Filters)
+	}
+	params := make([]string, len(qt.Filters))
+	for i, val := range(qt.Filters) {
+		params[i] = val.Value
 	}
 	if len(qt.Order) > 0 {
 		sql += " ORDER BY " + makeOrder(qt.Order)
@@ -193,7 +197,7 @@ func makeSql(query jsonQuery) (string, error) {
 		sql += fmt.Sprintf(" LIMIT %d", qt.Limit)
 	}
 
-	return sql, nil
+	return sql, params, nil
 }
 
 
