@@ -121,7 +121,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 	}
 
 	if r.ResultInfo.TotalRecords < 1 {
-		return fmt.Errorf("no config item with key '%w'", key)
+		return fmt.Errorf("no config item with key '%s'", key)
 	}
 
 	item := r.Items[0]
