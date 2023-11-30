@@ -281,12 +281,9 @@ func handleReport(w http.ResponseWriter, req *http.Request, server *ModReporting
 	}
 	sql := string(bytes)
 
-	fnname := extractFunctionName(sql)
-	fncall := makeFunctionCall(fnname, query.Params)
-	cmd := "SELECT * FROM " + fncall;
-
-	if query.Limit != 0 {
-		cmd += fmt.Sprintf(" LIMIT %d", query.Limit)
+	cmd, err := makeFunctionCall(sql, query.Params, query.Limit)
+	if err != nil {
+		return fmt.Errorf("could not construct SQL function call: %w", err)
 	}
 
 	tx, err := server.dbConn.Begin(context.Background())
@@ -297,12 +294,12 @@ func handleReport(w http.ResponseWriter, req *http.Request, server *ModReporting
 
 	_, err = server.dbConn.Exec(context.Background(), sql)
 	if err != nil {
-		return fmt.Errorf("could not establish SQL function: %w", err)
+		return fmt.Errorf("could not register SQL function: %w", err)
 	}
 
 	rows, err := server.dbConn.Query(context.Background(), cmd)
 	if err != nil {
-		return fmt.Errorf("could not establish SQL function: %w", err)
+		return fmt.Errorf("could not execute SQL from report: %w", err)
 	}
 
 	result, err := collectAndFixRows(rows)
@@ -334,25 +331,24 @@ func validateUrl(_url string) error {
 }
 
 
-func extractFunctionName(sql string) string {
+func makeFunctionCall(sql string, params map[string]string, limit int) (string, error) {
 	re := regexp.MustCompile(`--.+:function\s+(.+)`)
 	m := re.FindStringSubmatch(sql)
 	if m == nil {
-		return ""
+		return "", fmt.Errorf("could not extract SQL function name")
 	}
-	return m[1]
-}
 
-
-func makeFunctionCall(fnname string, params map[string]string) string {
 	s := make([]string, 0, len(params))
-
 	for key, val := range(params) {
 		s = append(s, fmt.Sprintf("%s => '%s'", key, val))
 	}
 
-	return fnname + "(" + strings.Join(s, ", ") + ")"
+	cmd := "SELECT * FROM " + m[1] + "(" + strings.Join(s, ", ") + ")"
+	if limit != 0 {
+		cmd += fmt.Sprintf(" LIMIT %d", limit)
+	}
 
+	return cmd, nil
 }
 
 
