@@ -31,14 +31,7 @@ func handleTables(w http.ResponseWriter, req *http.Request, server *ModReporting
 		return fmt.Errorf("could not fetch tables from reporting DB: %w", err)
 	}
 
-	bytes, err := json.Marshal(tables)
-	if err != nil {
-		return fmt.Errorf("could not encode JSON for tables: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(bytes)
-	return err
+	return sendJSON(w, tables, "tables")
 }
 
 
@@ -67,14 +60,7 @@ func handleColumns(w http.ResponseWriter, req *http.Request, server *ModReportin
 		return fmt.Errorf("could not fetch columns from reporting DB: %w", err)
 	}
 
-	bytes, err := json.Marshal(columns)
-	if err != nil {
-		return fmt.Errorf("could not encode JSON for columns: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(bytes)
-	return err
+	return sendJSON(w, columns, "columns")
 }
 
 
@@ -146,15 +132,7 @@ func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingS
 		return err
 	}
 
-	// XXX From here on, we should share code with handleTables and handleColumns
-	bytes, err = json.Marshal(result)
-	if err != nil {
-		return fmt.Errorf("could not encode JSON for query result: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(bytes)
-	return err
+	return sendJSON(w, result, "query result")
 }
 
 
@@ -312,15 +290,7 @@ func handleReport(w http.ResponseWriter, req *http.Request, server *ModReporting
 		Records: result,
 	}
 
-	// XXX From here on, we should share code with handleTables and handleColumns
-	bytes, err = json.Marshal(response)
-	if err != nil {
-		return fmt.Errorf("could not encode JSON for query result: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(bytes)
-	return err
+	return sendJSON(w, response, "report result")
 }
 
 
@@ -371,4 +341,16 @@ func collectAndFixRows(rows pgx.Rows) ([]map[string]any, error) {
 	}
 
 	return records, nil
+}
+
+
+func sendJSON(w http.ResponseWriter, data any, caption string) error {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("could not encode JSON for %s: %w", caption, err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(bytes)
+	return err
 }
