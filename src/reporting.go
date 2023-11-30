@@ -231,7 +231,6 @@ type reportResponse struct {
 }
 
 func handleReport(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
-	// XXX This first section should be shared with handleQuery
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("could not read HTTP request body: %w", err)
