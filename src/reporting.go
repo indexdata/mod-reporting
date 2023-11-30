@@ -4,6 +4,7 @@ import "context"
 import "io"
 import "strings"
 import "fmt"
+import "regexp"
 import "net/http"
 import "encoding/json"
 import "github.com/jackc/pgx/v5"
@@ -177,22 +178,9 @@ func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingS
 		return fmt.Errorf("could not execute SQL from JSON query: %w", err)
 	}
 
-	result, err := pgx.CollectRows(rows, pgx.RowToMap)
+	result, err := collectAndFixRows(rows)
 	if err != nil {
-		return fmt.Errorf("could not collect query result data: %w", err)
-	}
-
-	// Fix up types
-	for _, rec := range result {
-		for key, val := range rec {
-			switch v := val.(type) {
-			case [16]uint8:
-				// This is how pgx represents fields of type "uuid"
-				rec[key] = fmt.Sprintf("%x-%x-%x-%x-%x", v[0:4], v[4:6], v[6:8], v[8:10], v[10:16])
-			default:
-				// Nothing to do
-			}
-		}
+		return err
 	}
 
 	// XXX From here on, we should share code with handleTables and handleColumns
@@ -287,4 +275,143 @@ func makeOrder(orders []queryOrder) string {
 	}
 
 	return s
+}
+
+
+type reportQuery struct {
+	Url string `json:"url"`
+	Params map[string]string `json:"params"`
+	Limit int `json:"limit"`
+}
+
+type reportResponse struct {
+	TotalRecords int `json:"totalRecords"`
+	Records []map[string]any `json:"records"`
+}
+
+func handleReport(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+	// XXX This first section should be shared with handleQuery
+	bytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		return fmt.Errorf("could not read HTTP request body: %w", err)
+	}
+	var query reportQuery
+	err = json.Unmarshal(bytes, &query)
+	if err != nil {
+		return fmt.Errorf("could not deserialize JSON from body: %w", err)
+	}
+
+	err = validateUrl(query.Url)
+	if err != nil {
+		return fmt.Errorf("query may not be loaded from %s: %w", query.Url, err)
+	}
+
+	resp, err := http.Get(query.Url)
+	if err != nil {
+		return fmt.Errorf("could not fetch report from %s: %w", query.Url, err)
+	}
+	defer resp.Body.Close()	
+	bytes, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("could not read report: %w", err)
+	}
+	sql := string(bytes)
+
+	fnname := extractFunctionName(sql)
+	fncall := makeFunctionCall(fnname, query.Params)
+	cmd := "SELECT * FROM " + fncall;
+
+	if query.Limit != 0 {
+		cmd += fmt.Sprintf(" LIMIT %d", query.Limit)
+	}
+
+	tx, err := server.dbConn.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("could not open transaction: %w", err)
+	}
+	defer tx.Rollback(context.Background())
+
+	_, err = server.dbConn.Exec(context.Background(), sql)
+	if err != nil {
+		return fmt.Errorf("could not establish SQL function: %w", err)
+	}
+
+	rows, err := server.dbConn.Query(context.Background(), cmd)
+	if err != nil {
+		return fmt.Errorf("could not establish SQL function: %w", err)
+	}
+
+	result, err := collectAndFixRows(rows)
+	if err != nil {
+		return err
+	}
+
+	count := len(result) // XXX incorrect when there is a limit
+	response := reportResponse{
+		TotalRecords: count,
+		Records: result,
+	}
+
+	// XXX From here on, we should share code with handleTables and handleColumns
+	bytes, err = json.Marshal(response)
+	if err != nil {
+		return fmt.Errorf("could not encode JSON for query result: %w", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(bytes)
+	return err
+
+	return nil
+}
+
+
+func validateUrl(_url string) error {
+	// XXX At this point we could sanitize the URL, rejecting requests using unauthorized sources
+	return nil
+}
+
+
+func extractFunctionName(sql string) string {
+	re := regexp.MustCompile(`--.+:function\s+(.+)`)
+	m := re.FindStringSubmatch(sql)
+	if m == nil {
+		return ""
+	}
+	return m[1]
+}
+
+
+func makeFunctionCall(fnname string, params map[string]string) string {
+	s := make([]string, 0, len(params))
+
+	for key, val := range(params) {
+		s = append(s, fmt.Sprintf("%s => '%s'", key, val))
+	}
+
+	return fnname + "(" + strings.Join(s, ", ") + ")"
+
+}
+
+
+func collectAndFixRows(rows pgx.Rows) ([]map[string]any, error) {
+	records, err := pgx.CollectRows(rows, pgx.RowToMap)
+	if err != nil {
+		return nil, fmt.Errorf("could not collect query result data: %w", err)
+	}
+
+	// Fix up types
+	for _, rec := range records {
+		for key, val := range rec {
+			switch v := val.(type) {
+			case [16]uint8:
+				// This is how pgx represents fields of type "uuid"
+				rec[key] = fmt.Sprintf("%x-%x-%x-%x-%x", v[0:4], v[4:6], v[6:8], v[8:10], v[10:16])
+			default:
+				// Nothing to do
+			}
+		}
+	}
+
+	return records, nil
 }
