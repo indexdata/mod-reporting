@@ -25,6 +25,11 @@ For the time being, [this project's GitHub issue tracker](https://github.com/ind
 For now, see [`mod-ldp`'s README](https://github.com/folio-org/mod-ldp#readme) for further details.
 
 
+## API note
+
+In the response from `/ldp/db/reports`, there is a numeric element `totalRecords`. Note that this is a count of the number of records included in the `records` array -- _not_ the total number of hits in the database. (That information is not available from PostgreSQL; the provided field is redundant, and would have been better omitted, but we retain it for backwards compatibility.)
+
+
 ## Environment
 
 In normal operation, mod-reporting determines which underlying reporting database to connect to on the basis of the information configured in the mod-settings record with scope `ui-ldp.config` and key `dbinfo`, as managed by the "Database configuration" settings page of the Reporting app. However, these configured settings can be overridden if mod-reporting is run with all three of the following environment variables set:

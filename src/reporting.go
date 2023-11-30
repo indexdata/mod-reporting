@@ -284,7 +284,7 @@ func handleReport(w http.ResponseWriter, req *http.Request, server *ModReporting
 		return err
 	}
 
-	count := len(result) // XXX incorrect when there is a limit
+	count := len(result) // This is redundant, but it's in the old API so we retain it here
 	response := reportResponse{
 		TotalRecords: count,
 		Records: result,
