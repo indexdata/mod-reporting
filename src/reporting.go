@@ -43,7 +43,6 @@ func handleTables(w http.ResponseWriter, req *http.Request, server *ModReporting
 
 
 func fetchTables(dbConn *pgxpool.Pool) ([]dbTable, error) {
-	// XXX This is hardwired to MetaDB: we should also support LDP Classic
 	query := "SELECT schema_name, table_name FROM metadb.base_table"
 	rows, err := dbConn.Query(context.Background(), query)
 	if err != nil {
@@ -326,7 +325,7 @@ func handleReport(w http.ResponseWriter, req *http.Request, server *ModReporting
 
 
 func validateUrl(_url string) error {
-	// XXX At this point we could sanitize the URL, rejecting requests using unauthorized sources
+	// At this point we could sanitize the URL, rejecting requests using unauthorized sources
 	return nil
 }
 
