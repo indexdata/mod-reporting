@@ -19,45 +19,9 @@ type dbTable struct {
 type dbColumn struct {
 	ColumnName string `db:"column_name" json:"columnName"`
 	DataType string `db:"data_type" json:"data_type"`
-	// TableCatalog string `db:"table_catalog"`
 	TableSchema string `db:"table_schema" json:"tableSchema"`
 	TableName string `db:"table_name" json:"tableName"`
 	OrdinalPosition string `db:"ordinal_position" json:"ordinalPosition"`
-	// ColumnDefault string `db:"column_default"`
-	// IsNullable string `db:"is_nullable"`
-	// CharacterMaximumLength string `db:"character_maximum_length"`
-	// CharacterOctetLength string `db:"character_octet_length"`
-	// NumericPrecision string `db:"numeric_precision"`
-	// NumericPrecisionRadix string `db:"numeric_precision_radix"`
-	// NumericScale string `db:"numeric_scale"`
-	// DatetimePrecision string `db:"datetime_precision"`
-	// IntervalType string `db:"interval_type"`
-	// IntervalPrecision string `db:"interval_precision"`
-	// CharacterSetCatalog string `db:"character_set_catalog"`
-	// CharacterSetSchema string `db:"character_set_schema"`
-	// CharacterSetName string `db:"character_set_name"`
-	// CollationCatalog string `db:"collation_catalog"`
-	// CollationSchema string `db:"collation_schema"`
-	// CollationName string `db:"collation_name"`
-	// DomainCatalog string `db:"domain_catalog"`
-	// DomainSchema string `db:"domain_schema"`
-	// DomainName string `db:"domain_name"`
-	// UdtCatalog string `db:"udt_catalog"`
-	// UdtSchema string `db:"udt_schema"`
-	// UdtName string `db:"udt_name"`
-	// ScopeCatalog string `db:"scope_catalog"`
-	// ScopeSchema string `db:"scope_schema"`
-	// ScopeName string `db:"scope_name"`
-	// MaximumCardinality string `db:"maximum_cardinality"`
-	// DtdIdentifier string `db:"dtd_identifier"`
-	// IsSelfReferencing string `db:"is_self_referencing"`
-	// IsIdentity string `db:"is_identity"`
-	// IdentityGeneration string `db:"identity_generation"`
-	// IdentityStart string `db:"identity_start"`
-	// IdentityIncrement string `db:"identity_increment"`
-	// IdentityMaximum string `db:"identity_maximum"`
-	// IdentityMinimum string `db:"identity_minimum"`
-	// ... and probably more
 }
 
 
