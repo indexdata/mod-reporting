@@ -325,7 +325,7 @@ func handleReport(w http.ResponseWriter, req *http.Request, server *ModReporting
 
 
 func validateUrl(_url string) error {
-	// At this point we could sanitize the URL, rejecting requests using unauthorized sources
+	// We could sanitize the URL, rejecting requests using unauthorized sources: see issue #36
 	return nil
 }
 
