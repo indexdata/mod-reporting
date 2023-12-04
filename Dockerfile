@@ -1,3 +1,6 @@
+# Build with: docker build -t mod-reporting .
+# Run with: docker run -p 12369:12369 -e OKAPI_PW=[DIKU_ADMIN-PASSWORD] admin mod-reporting
+
 FROM golang:1.21
 
 # Set destination for COPY
