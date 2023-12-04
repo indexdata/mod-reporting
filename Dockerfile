@@ -1,5 +1,5 @@
 # Build with: docker build -t mod-reporting .
-# Run with: docker run -p 12369:12369 -e OKAPI_PW=[DIKU_ADMIN-PASSWORD] admin mod-reporting
+# Run with: docker run -p 12369:12369 -e OKAPI_PW=[DIKU_ADMIN-PASSWORD] mod-reporting
 
 FROM golang:1.21
 
@@ -19,7 +19,7 @@ RUN go build -o mod-reporting ./...
 EXPOSE 12369
 
 # Run
-ENV LOGCAT=listen,op,curl,status,response,db
+ENV LOGCAT=listen,op,curl,status,response,db,path
 ENV OKAPI_URL=https://folio-snapshot-okapi.dev.folio.org
 ENV OKAPI_TENANT=diku
 ENV OKAPI_USER=diku_admin
