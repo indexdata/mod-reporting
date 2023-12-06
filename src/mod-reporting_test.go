@@ -7,13 +7,12 @@ import "time"
 import "net/http"
 import "io"
 import "regexp"
-import "github.com/indexdata/foliogo"
 
 func TestModReporting(t *testing.T) {
-	cfg, server := MakeConfiguredServer("../etc/config.json", "..")
+	_, server := MakeConfiguredServer("../etc/config.json", "..")
 	var err error
 	go func() {
-		err = server.launch(cfg.Listen.Host + ":12369")
+		err = server.launch()
 	}()
 
 	// Allow half a second for the server to start. This is ugly

@@ -26,7 +26,6 @@ func main() {
 	// exitIfError(err, 4, "cannot connect to DB")
 	// server.Log("db", "connected to DB", dbUrl)
 
-	cfg := server.Config()
-	err := server.launch(cfg.Listen.Host + ":" + fmt.Sprint(cfg.Listen.Port))
+	err := server.launch()
 	exitIfError(err, 5, "cannot launch HTTP server")
 }

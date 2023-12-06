@@ -50,11 +50,6 @@ func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) 
 }
 
 
-func (server *ModReportingServer)Config() *config{
-	return server.config
-}
-
-
 func (server *ModReportingServer)Log(cat string, args ...string) {
 	server.logger.Log(cat, args...)
 }
@@ -74,7 +69,9 @@ func (server *ModReportingServer) connectDb(url string, user string, pass string
 }
 
 
-func (server *ModReportingServer) launch(hostspec string) error {
+func (server *ModReportingServer) launch() error {
+	cfg := server.config
+	hostspec := cfg.Listen.Host + ":" + fmt.Sprint(cfg.Listen.Port)
 	server.server.Addr = hostspec
 	server.Log("listen", "listening on", hostspec)
 	err := server.server.ListenAndServe()
