@@ -9,8 +9,11 @@ import "io"
 import "regexp"
 
 func TestModReporting(t *testing.T) {
-	_, server := MakeConfiguredServer("../etc/config.json", "..")
-	var err error
+	server, err := MakeConfiguredServer("../etc/config.json", "..")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Cannot create server: %s\n", err)
+		os.Exit(2)
+	}
 	go func() {
 		err = server.launch()
 	}()
@@ -19,7 +22,7 @@ func TestModReporting(t *testing.T) {
 	time.Sleep(time.Second / 2)
 	runTests(t, http.Client{})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Cannot create HTTP server:", err)
+		fmt.Fprintf(os.Stderr, "Cannot launch server: %s\n", err)
 		os.Exit(3)
 	}
 }

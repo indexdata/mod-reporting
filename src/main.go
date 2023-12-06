@@ -17,7 +17,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, server := MakeConfiguredServer(os.Args[1], ".")
+	server, err := MakeConfiguredServer(os.Args[1], ".")
+	exitIfError(err, 2, "cannot create server")
+
 	// dbUrl, dbUser, dbPass, err := getDbInfo(session)
 	// exitIfError(err, 3, "cannot extract data from 'dbinfo'")
 	// server.Log("db", "url=" + dbUrl + ", user=" + dbUser)
@@ -26,6 +28,6 @@ func main() {
 	// exitIfError(err, 4, "cannot connect to DB")
 	// server.Log("db", "connected to DB", dbUrl)
 
-	err := server.launch()
-	exitIfError(err, 5, "cannot launch HTTP server")
+	err = server.launch()
+	exitIfError(err, 3, "cannot launch HTTP server")
 }
