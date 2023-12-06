@@ -101,6 +101,27 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 		return
 	}
 
+	if path == "/ldp/config" {
+		runWithErrorHandling(w, req, server, handleConfig)
+	} else if strings.HasPrefix(path, "/ldp/config/") {
+		runWithErrorHandling(w, req, server, handleConfigKey)
+	} else if path == "/ldp/db/tables" {
+		runWithErrorHandling(w, req, server, handleTables)
+	} else if path == "/ldp/db/columns" {
+		runWithErrorHandling(w, req, server, handleColumns)
+	} else if path == "/ldp/db/query" && req.Method == "POST" {
+		runWithErrorHandling(w, req, server, handleQuery)
+	} else if path == "/ldp/db/reports" && req.Method == "POST" {
+		runWithErrorHandling(w, req, server, handleReport)
+	} else {
+		// Unrecognized
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "Not found")
+	}
+}
+
+
+func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModReportingServer, f handlerFn) {
 	host := req.Header.Get("X-Okapi-Url")
 	tenant := req.Header.Get("X-Okapi-Tenant")
 	session, err := server.findSession(host, tenant)
@@ -111,28 +132,7 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 		return
 	}
 
-	if path == "/ldp/config" {
-		runWithErrorHandling(w, req, session, handleConfig)
-	} else if strings.HasPrefix(path, "/ldp/config/") {
-		runWithErrorHandling(w, req, session, handleConfigKey)
-	} else if path == "/ldp/db/tables" {
-		runWithErrorHandling(w, req, session, handleTables)
-	} else if path == "/ldp/db/columns" {
-		runWithErrorHandling(w, req, session, handleColumns)
-	} else if path == "/ldp/db/query" && req.Method == "POST" {
-		runWithErrorHandling(w, req, session, handleQuery)
-	} else if path == "/ldp/db/reports" && req.Method == "POST" {
-		runWithErrorHandling(w, req, session, handleReport)
-	} else {
-		// Unrecognized
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, "Not found")
-	}
-}
-
-
-func runWithErrorHandling(w http.ResponseWriter, req *http.Request, session *ModReportingSession, f handlerFn) {
-	err := f(w, req, session)
+	err = f(w, req, session)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, err.Error())
