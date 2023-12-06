@@ -11,6 +11,7 @@ import "github.com/jackc/pgx/v5/pgxpool"
 
 
 type handlerFn func(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error;
+type sessionFn func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error;
 
 
 type ModReportingServer struct {
@@ -20,6 +21,7 @@ type ModReportingServer struct {
 	folioSession foliogo.Session
 	server http.Server
 	dbConn *pgxpool.Pool
+	sessions map[string]*ModReportingSession
 }
 
 
@@ -38,6 +40,7 @@ func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string, 
 			WriteTimeout: 30 * time.Second,
 			Handler: mux,
 		},
+		sessions: map[string]*ModReportingSession{},
 	}
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { handler(w, r, &server) })
@@ -78,6 +81,24 @@ func (server *ModReportingServer) launch(hostspec string) error {
 }
 
 
+// We maintain a map of tenant:url to session
+func (server *ModReportingServer) findSession(url string, tenant string) (*ModReportingSession, error) {
+	key := tenant + ":" + url
+	session := server.sessions[key]
+	if session != nil {
+		return session, nil
+	}
+
+	session, err := NewModReportingSession(server, url, tenant)
+	if err != nil {
+		return nil, fmt.Errorf("could not create session for key '%s': %w", key, err)
+	}
+
+	server.sessions[key] = session
+	return session, nil
+}
+
+
 func handler(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
 	path := req.URL.Path
 	server.Log("path", path)
@@ -93,12 +114,26 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
   <li><a href="/ldp/db/tables">List tables from reporting database</a></li>
   <li><a href="/ldp/db/columns?schema=folio_users&table=users">List columns for "users" table</a></li>
 </ul>`)
+		return
 	} else if path == "/admin/health" {
 		fmt.Fprintln(w, "Behold! I live!!")
-	} else if path == "/ldp/config" {
-		runWithErrorHandling(w, req, server, handleConfig)
+		return
+	}
+
+	host := req.Header.Get("X-Okapi-Url")
+	tenant := req.Header.Get("X-Okapi-Tenant")
+	session, err := server.findSession(host, tenant)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "could not make session: %s\n", err)
+		server.Log("error", fmt.Sprintf("%s: %s", req.RequestURI, err.Error()))
+		return
+	}
+
+	if path == "/ldp/config" {
+		sessionWithErrorHandling(w, req, session, handleConfig)
 	} else if strings.HasPrefix(path, "/ldp/config/") {
-		runWithErrorHandling(w, req, server, handleConfigKey)
+		sessionWithErrorHandling(w, req, session, handleConfigKey)
 	} else if path == "/ldp/db/tables" {
 		runWithErrorHandling(w, req, server, handleTables)
 	} else if path == "/ldp/db/columns" {
@@ -121,5 +156,15 @@ func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModR
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, err.Error())
 		server.Log("error", fmt.Sprintf("%s: %s", req.RequestURI, err.Error()))
+	}
+}
+
+
+func sessionWithErrorHandling(w http.ResponseWriter, req *http.Request, session *ModReportingSession, f sessionFn) {
+	err := f(w, req, session)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, err.Error())
+		session.Log("error", fmt.Sprintf("%s: %s", req.RequestURI, err.Error()))
 	}
 }

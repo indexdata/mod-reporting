@@ -40,6 +40,35 @@ type configItem struct {
 }
 
 
+// Wrapper for foliogo.Fetch that extracts token from request and sends it
+func fetchWithToken(req *http.Request, folioSession foliogo.Session, path string, params foliogo.RequestParams) ([]byte, error) {
+	token := req.Header.Get("X-Okapi-Token")
+	if token != "" {
+		params.Token = token
+	} else {
+		fmt.Printf("*** no X-Okapi-Token header in request: not from Okapi")
+		// It must be a session created, so it will handle the cookie we got when we logged in
+		// So there is nothing for us to do here
+		/*
+		for _, cookie := range req.Cookies() {
+			if cookie.Name == "folioAccessToken" {
+				token = cookie.Value
+				break
+			}
+		}
+		fmt.Printf("token from cookie is %s\n", token)
+		*/
+	}
+
+	return folioSession.Fetch(path, params)
+}
+
+
+func fetchWithToken0(req *http.Request, folioSession foliogo.Session, path string) ([]byte, error) {
+	return fetchWithToken(req, folioSession, path, foliogo.RequestParams{})
+}
+
+
 func settingsItemToConfigItem(item settingsItemGeneral, tenant string) (configItem, error) {
 	value, ok := item.Value.(string)
 	if !ok {
@@ -60,8 +89,8 @@ func settingsItemToConfigItem(item settingsItemGeneral, tenant string) (configIt
 
 
 // The /ldp/config endpoint only supports GET, with no URL parameters
-func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
-	bytes, err := server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"`)
+func handleConfig(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
+	bytes, err := fetchWithToken0(req, session.folioSession, `settings/entries?query=scope=="ui-ldp.admin"`)
 	if err != nil {
 		return fmt.Errorf("could not fetch from mod-settings: %w", err)
 	}
@@ -78,7 +107,7 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 	// happen. But we could look at resultInfo.totalRecords to
 	// determine whether this has happened.
 
-	tenant := server.folioSession.GetTenant()
+	tenant := session.server.folioSession.GetTenant()
 	config := make([]configItem, len(r.Items))
 	for i, item := range(r.Items) {
 		config[i], err = settingsItemToConfigItem(item, tenant)
@@ -99,17 +128,18 @@ func handleConfig(w http.ResponseWriter, req *http.Request, server *ModReporting
 
 
 // The /ldp/config/{key} endpoint only supports GET and PUT
-func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+func handleConfigKey(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
 	key := strings.Replace(req.URL.Path, "/ldp/config/", "", 1)
 	var bytes []byte
 	var err error
 
 	if req.Method == "PUT" {
-		return writeConfigKey(w, req, server, key)
+		return writeConfigKey(w, req, session, key)
 	}
 
 	// Assume GET
-	bytes, err = server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`)
+	path := `settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`
+	bytes, err = fetchWithToken0(req, session.folioSession, path)
 	if err != nil {
 		return fmt.Errorf("could not read from mod-settings: %w", err)
 	}
@@ -125,7 +155,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 	}
 
 	item := r.Items[0]
-	tenant := server.folioSession.GetTenant()
+	tenant := session.folioSession.GetTenant()
 	config, err := settingsItemToConfigItem(item, tenant)
 	if err != nil {
 		return err
@@ -142,7 +172,7 @@ func handleConfigKey(w http.ResponseWriter, req *http.Request, server *ModReport
 }
 
 
-func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReportingServer, key string) (error) {
+func writeConfigKey(w http.ResponseWriter, req *http.Request, session *ModReportingSession, key string) (error) {
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("could not read HTTP request body: %w", err)
@@ -159,7 +189,8 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 	// we're creating a new key from if we're replacing an
 	// existing one, so we need first to search for an existing
 	// record
-	bytes, err = server.folioSession.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`)
+	path := `settings/entries?query=scope=="ui-ldp.admin"+and+key=="` + key + `"`
+	bytes, err = fetchWithToken0(req, session.folioSession, path)
 	if err != nil {
 		return fmt.Errorf("could not read from mod-settings: %w", err)
 	}
@@ -170,7 +201,7 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		return fmt.Errorf("could not deserialize JSON %+v from mod-settings: %w", bytes, err)
 	}
 
-	var id, method, path string
+	var id, method string
 	if r.ResultInfo.TotalRecords > 0 {
 		// We need to PUT to the existing record
 		id = r.Items[0].Id
@@ -193,7 +224,7 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, server *ModReporti
 		"value": item.Value,
 	}
 	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
-	_, err = server.folioSession.Fetch(path, foliogo.RequestParams{
+	_, err = fetchWithToken(req, session.folioSession, path, foliogo.RequestParams{
 		Method: method,
 		Json: simpleSettingsItem,
 	})

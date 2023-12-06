@@ -1,10 +1,12 @@
 TARGET=../target/mod-reporting
 
-$(TARGET): main.go config-file.go getdbinfo.go http-error.go server.go ldp-config.go reporting.go
+$(TARGET): main.go config-file.go getdbinfo.go http-error.go server.go session.go ldp-config.go reporting.go
 	go build -o $@
 
 run: $(TARGET)
-	cd ..; env LOGCAT=listen,path,db,error,sql,op,curl,status,response OKAPI_URL=https://folio-snapshot-okapi.dev.folio.org OKAPI_TENANT=diku OKAPI_USER=diku_admin src/$(TARGET) etc/config.json
+	cd ..; env LOGCAT=listen,path,db,error,sql,op,curl,status,response src/$(TARGET) etc/config.json
+
+run-local: cd ..; env LOGCAT=listen,path,db,error,sql,op,curl,status,response OKAPI_URL=https://folio-snapshot-2-okapi.dev.folio.org OKAPI_TENANT=diku OKAPI_USER=diku_admin src/$(TARGET) etc/config.json
 
 lint:
 	-go vet ./...
@@ -19,5 +21,5 @@ test:
 	go tool cover -func=c.out | sed 's/^github.com\/indexdata\/mod-reporting\/src\///'
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) c.out
 
