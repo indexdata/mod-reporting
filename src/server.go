@@ -50,6 +50,11 @@ func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) 
 }
 
 
+func (server *ModReportingServer)Config() *config{
+	return server.config
+}
+
+
 func (server *ModReportingServer)Log(cat string, args ...string) {
 	server.logger.Log(cat, args...)
 }

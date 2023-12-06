@@ -17,7 +17,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, server := MakeConfiguredServer(os.Args[1], ".")
+	_, server := MakeConfiguredServer(os.Args[1], ".")
 	// dbUrl, dbUser, dbPass, err := getDbInfo(session)
 	// exitIfError(err, 3, "cannot extract data from 'dbinfo'")
 	// server.Log("db", "url=" + dbUrl + ", user=" + dbUser)
@@ -26,6 +26,7 @@ func main() {
 	// exitIfError(err, 4, "cannot connect to DB")
 	// server.Log("db", "connected to DB", dbUrl)
 
+	cfg := server.Config()
 	err := server.launch(cfg.Listen.Host + ":" + fmt.Sprint(cfg.Listen.Port))
 	exitIfError(err, 5, "cannot launch HTTP server")
 }
