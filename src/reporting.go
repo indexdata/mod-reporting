@@ -25,8 +25,12 @@ type dbColumn struct {
 }
 
 
-func handleTables(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
-	tables, err := fetchTables(server.dbConn)
+func handleTables(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
+	dbConn, err := session.findDbConn()
+	if err != nil {
+		return fmt.Errorf("could not find reporting DB: %w", err)
+	}
+	tables, err := fetchTables(dbConn)
 	if err != nil {
 		return fmt.Errorf("could not fetch tables from reporting DB: %w", err)
 	}
@@ -47,7 +51,7 @@ func fetchTables(dbConn *pgxpool.Pool) ([]dbTable, error) {
 }
 
 
-func handleColumns(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+func handleColumns(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
 	v := req.URL.Query()
 	schema := v.Get("schema")
 	table := v.Get("table")
@@ -55,7 +59,11 @@ func handleColumns(w http.ResponseWriter, req *http.Request, server *ModReportin
 		return fmt.Errorf("must specify both schema and table")
 	}
 
-	columns, err := fetchColumns(server.dbConn, schema, table)
+	dbConn, err := session.findDbConn()
+	if err != nil {
+		return fmt.Errorf("could not find reporting DB: %w", err)
+	}
+	columns, err := fetchColumns(dbConn, schema, table)
 	if err != nil {
 		return fmt.Errorf("could not fetch columns from reporting DB: %w", err)
 	}
@@ -106,6 +114,7 @@ type jsonQuery struct {
 
 
 func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+	session := ModReportingSession{} // XXX for now
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("could not read HTTP request body: %w", err)
@@ -122,7 +131,7 @@ func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingS
 	}
 
 	server.Log("sql", sql, fmt.Sprintf("%v", params))
-	rows, err := server.dbConn.Query(context.Background(), sql, params...)
+	rows, err := session.dbConn.Query(context.Background(), sql, params...)
 	if err != nil {
 		return fmt.Errorf("could not execute SQL from JSON query: %w", err)
 	}
@@ -231,6 +240,7 @@ type reportResponse struct {
 }
 
 func handleReport(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
+	session := ModReportingSession{} // XXX for now
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("could not read HTTP request body: %w", err)
@@ -262,18 +272,18 @@ func handleReport(w http.ResponseWriter, req *http.Request, server *ModReporting
 		return fmt.Errorf("could not construct SQL function call: %w", err)
 	}
 
-	tx, err := server.dbConn.Begin(context.Background())
+	tx, err := session.dbConn.Begin(context.Background())
 	if err != nil {
 		return fmt.Errorf("could not open transaction: %w", err)
 	}
 	defer tx.Rollback(context.Background())
 
-	_, err = server.dbConn.Exec(context.Background(), sql)
+	_, err = session.dbConn.Exec(context.Background(), sql)
 	if err != nil {
 		return fmt.Errorf("could not register SQL function: %w", err)
 	}
 
-	rows, err := server.dbConn.Query(context.Background(), cmd)
+	rows, err := session.dbConn.Query(context.Background(), cmd)
 	if err != nil {
 		return fmt.Errorf("could not execute SQL from report: %w", err)
 	}

@@ -1,7 +1,10 @@
 package main
 
+import "context"
+import "strings"
 import "fmt"
 import "github.com/indexdata/foliogo"
+import "github.com/jackc/pgx/v5/pgxpool"
 
 
 type ModReportingSession struct {
@@ -9,7 +12,7 @@ type ModReportingSession struct {
 	url string
 	tenant string
 	folioSession foliogo.Session
-	// dbConn *pgxpool.Pool
+	dbConn *pgxpool.Pool
 }
 
 
@@ -62,3 +65,26 @@ func (session *ModReportingSession)Log(cat string, args ...string) {
 }
 
 
+func (session *ModReportingSession) findDbConn() (*pgxpool.Pool, error) {
+	if session.dbConn == nil {
+		dbUrl, dbUser, dbPass, err := getDbInfo(session.folioSession)
+		if err != nil {
+			return nil, fmt.Errorf("cannot extract data from 'dbinfo': %w", err)
+		}
+		session.Log("db", "url=" + dbUrl + ", user=" + dbUser)
+
+		// For historical reasons, database connection configuration is often JDBCish
+		dbUrl = strings.Replace(dbUrl, "jdbc:postgresql://", "", 1)
+		dbUrl = strings.Replace(dbUrl, "postgres://", "", 1)
+		// We may need `?sslmode=require` on the end of the URL.
+		conn, err := pgxpool.New(context.Background(), "postgres://" + dbUser + ":" + dbPass + "@" + dbUrl)
+		if err != nil {
+			return nil, fmt.Errorf("cannot connect to DB: %w", err)
+		}
+
+		session.dbConn = conn
+		session.Log("db", "connected to DB", dbUrl)
+	}
+
+	return session.dbConn, nil
+}

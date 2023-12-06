@@ -1,12 +1,10 @@
 package main
 
-import "context"
 import "fmt"
 import "net/http"
 import "time"
 import "strings"
 import "github.com/MikeTaylor/catlogger"
-import "github.com/jackc/pgx/v5/pgxpool"
 
 
 type handlerFn func(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error;
@@ -18,7 +16,6 @@ type ModReportingServer struct {
 	logger *catlogger.Logger
 	root string
 	server http.Server
-	dbConn *pgxpool.Pool
 	sessions map[string]*ModReportingSession
 }
 
@@ -52,20 +49,6 @@ func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) 
 
 func (server *ModReportingServer)Log(cat string, args ...string) {
 	server.logger.Log(cat, args...)
-}
-
-
-func (server *ModReportingServer) connectDb(url string, user string, pass string) error {
-	// For historical reasons, database connection configuration is often JDBCish
-	url = strings.Replace(url, "jdbc:postgresql://", "", 1)
-	url = strings.Replace(url, "postgres://", "", 1)
-	// We may need `?sslmode=require` on the end of the URL.
-	conn, err := pgxpool.New(context.Background(), "postgres://" + user + ":" + pass + "@" + url)
-	if err != nil {
-		return err
-	}
-	server.dbConn = conn
-	return nil
 }
 
 
@@ -134,9 +117,9 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 	} else if strings.HasPrefix(path, "/ldp/config/") {
 		sessionWithErrorHandling(w, req, session, handleConfigKey)
 	} else if path == "/ldp/db/tables" {
-		runWithErrorHandling(w, req, server, handleTables)
+		sessionWithErrorHandling(w, req, session, handleTables)
 	} else if path == "/ldp/db/columns" {
-		runWithErrorHandling(w, req, server, handleColumns)
+		sessionWithErrorHandling(w, req, session, handleColumns)
 	} else if path == "/ldp/db/query" && req.Method == "POST" {
 		runWithErrorHandling(w, req, server, handleQuery)
 	} else if path == "/ldp/db/reports" && req.Method == "POST" {
