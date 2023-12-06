@@ -3,14 +3,6 @@ package main
 import "os"
 import "fmt"
 
-
-func exitIfError(err error, exitStatus int, message string) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %s: %s\n", os.Args[0], message, err)
-		os.Exit(exitStatus)
-	}
-}
-
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Fprintln(os.Stderr, "Usage:", os.Args[0], "<configFile.json>")
@@ -18,7 +10,10 @@ func main() {
 	}
 
 	server, err := MakeConfiguredServer(os.Args[1], ".")
-	exitIfError(err, 2, "cannot create server")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: cannot create server: %s\n", os.Args[0], err)
+		os.Exit(2)
+	}
 
 	// dbUrl, dbUser, dbPass, err := getDbInfo(session)
 	// exitIfError(err, 3, "cannot extract data from 'dbinfo'")
@@ -29,5 +24,8 @@ func main() {
 	// server.Log("db", "connected to DB", dbUrl)
 
 	err = server.launch()
-	exitIfError(err, 3, "cannot launch HTTP server")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: cannot launch server: %s\n", os.Args[0], err)
+		os.Exit(3)
+	}
 }
