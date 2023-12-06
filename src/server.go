@@ -121,9 +121,9 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 	} else if path == "/ldp/db/columns" {
 		sessionWithErrorHandling(w, req, session, handleColumns)
 	} else if path == "/ldp/db/query" && req.Method == "POST" {
-		runWithErrorHandling(w, req, server, handleQuery)
+		sessionWithErrorHandling(w, req, session, handleQuery)
 	} else if path == "/ldp/db/reports" && req.Method == "POST" {
-		runWithErrorHandling(w, req, server, handleReport)
+		sessionWithErrorHandling(w, req, session, handleReport)
 	} else {
 		// Unrecognized
 		w.WriteHeader(http.StatusNotFound)

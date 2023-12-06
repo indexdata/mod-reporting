@@ -113,8 +113,12 @@ type jsonQuery struct {
 }
 
 
-func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
-	session := ModReportingSession{} // XXX for now
+func handleQuery(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
+	dbConn, err := session.findDbConn()
+	if err != nil {
+		return fmt.Errorf("could not find reporting DB: %w", err)
+	}
+
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("could not read HTTP request body: %w", err)
@@ -130,8 +134,8 @@ func handleQuery(w http.ResponseWriter, req *http.Request, server *ModReportingS
 		return fmt.Errorf("could not generate SQL from JSON query: %w", err)
 	}
 
-	server.Log("sql", sql, fmt.Sprintf("%v", params))
-	rows, err := session.dbConn.Query(context.Background(), sql, params...)
+	session.Log("sql", sql, fmt.Sprintf("%v", params))
+	rows, err := dbConn.Query(context.Background(), sql, params...)
 	if err != nil {
 		return fmt.Errorf("could not execute SQL from JSON query: %w", err)
 	}
@@ -239,8 +243,12 @@ type reportResponse struct {
 	Records []map[string]any `json:"records"`
 }
 
-func handleReport(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error {
-	session := ModReportingSession{} // XXX for now
+func handleReport(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
+	dbConn, err := session.findDbConn()
+	if err != nil {
+		return fmt.Errorf("could not find reporting DB: %w", err)
+	}
+
 	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("could not read HTTP request body: %w", err)
@@ -272,18 +280,18 @@ func handleReport(w http.ResponseWriter, req *http.Request, server *ModReporting
 		return fmt.Errorf("could not construct SQL function call: %w", err)
 	}
 
-	tx, err := session.dbConn.Begin(context.Background())
+	tx, err := dbConn.Begin(context.Background())
 	if err != nil {
 		return fmt.Errorf("could not open transaction: %w", err)
 	}
 	defer tx.Rollback(context.Background())
 
-	_, err = session.dbConn.Exec(context.Background(), sql)
+	_, err = dbConn.Exec(context.Background(), sql)
 	if err != nil {
 		return fmt.Errorf("could not register SQL function: %w", err)
 	}
 
-	rows, err := session.dbConn.Query(context.Background(), cmd)
+	rows, err := dbConn.Query(context.Background(), cmd)
 	if err != nil {
 		return fmt.Errorf("could not execute SQL from report: %w", err)
 	}
