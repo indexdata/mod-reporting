@@ -6,7 +6,7 @@ $(TARGET): main.go config-file.go getdbinfo.go http-error.go server.go session.g
 run: $(TARGET)
 	cd ..; env LOGCAT=listen,path,db,error,sql,op,curl,status,response src/$(TARGET) etc/config.json
 
-run-local:
+run-local: $(TARGET)
 	cd ..; env LOGCAT=listen,path,db,error,sql,op,curl,status,response OKAPI_URL=https://folio-snapshot-okapi.dev.folio.org OKAPI_TENANT=diku OKAPI_USER=diku_admin src/$(TARGET) etc/config.json
 
 lint:
