@@ -7,8 +7,7 @@ import "strings"
 import "github.com/MikeTaylor/catlogger"
 
 
-type handlerFn func(w http.ResponseWriter, req *http.Request, server *ModReportingServer) error;
-type sessionFn func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error;
+type handlerFn func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error;
 
 
 type ModReportingServer struct {
@@ -113,17 +112,17 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 	}
 
 	if path == "/ldp/config" {
-		sessionWithErrorHandling(w, req, session, handleConfig)
+		runWithErrorHandling(w, req, session, handleConfig)
 	} else if strings.HasPrefix(path, "/ldp/config/") {
-		sessionWithErrorHandling(w, req, session, handleConfigKey)
+		runWithErrorHandling(w, req, session, handleConfigKey)
 	} else if path == "/ldp/db/tables" {
-		sessionWithErrorHandling(w, req, session, handleTables)
+		runWithErrorHandling(w, req, session, handleTables)
 	} else if path == "/ldp/db/columns" {
-		sessionWithErrorHandling(w, req, session, handleColumns)
+		runWithErrorHandling(w, req, session, handleColumns)
 	} else if path == "/ldp/db/query" && req.Method == "POST" {
-		sessionWithErrorHandling(w, req, session, handleQuery)
+		runWithErrorHandling(w, req, session, handleQuery)
 	} else if path == "/ldp/db/reports" && req.Method == "POST" {
-		sessionWithErrorHandling(w, req, session, handleReport)
+		runWithErrorHandling(w, req, session, handleReport)
 	} else {
 		// Unrecognized
 		w.WriteHeader(http.StatusNotFound)
@@ -132,17 +131,7 @@ This is <a href="https://github.com/indexdata/mod-reporting">mod-reporting</a>. 
 }
 
 
-func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModReportingServer, f handlerFn) {
-	err := f(w, req, server)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, err.Error())
-		server.Log("error", fmt.Sprintf("%s: %s", req.RequestURI, err.Error()))
-	}
-}
-
-
-func sessionWithErrorHandling(w http.ResponseWriter, req *http.Request, session *ModReportingSession, f sessionFn) {
+func runWithErrorHandling(w http.ResponseWriter, req *http.Request, session *ModReportingSession, f handlerFn) {
 	err := f(w, req, session)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
