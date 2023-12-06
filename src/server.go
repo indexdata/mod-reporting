@@ -6,7 +6,6 @@ import "net/http"
 import "time"
 import "strings"
 import "github.com/MikeTaylor/catlogger"
-import "github.com/indexdata/foliogo"
 import "github.com/jackc/pgx/v5/pgxpool"
 
 
@@ -18,14 +17,13 @@ type ModReportingServer struct {
 	config *config
 	logger *catlogger.Logger
 	root string
-	folioSession foliogo.Session
 	server http.Server
 	dbConn *pgxpool.Pool
 	sessions map[string]*ModReportingSession
 }
 
 
-func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string, folioSession foliogo.Session) *ModReportingServer {
+func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) *ModReportingServer {
 	tr := &http.Transport{}
 	tr.RegisterProtocol("file", http.NewFileTransport(http.Dir(root)))
 
@@ -34,7 +32,6 @@ func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string, 
 		config: cfg,
 		logger: logger,
 		root: root,
-		folioSession: folioSession,
 		server: http.Server{
 			ReadTimeout:  30 * time.Second,
 			WriteTimeout: 30 * time.Second,

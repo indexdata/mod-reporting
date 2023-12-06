@@ -2,7 +2,6 @@ package main
 
 import "os"
 import "fmt"
-import "github.com/indexdata/foliogo"
 
 
 func exitIfError(err error, exitStatus int, message string) {
@@ -18,7 +17,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, server := MakeConfiguredServer(os.Args[1], ".", foliogo.Session{})
+	cfg, server := MakeConfiguredServer(os.Args[1], ".")
 	// dbUrl, dbUser, dbPass, err := getDbInfo(session)
 	// exitIfError(err, 3, "cannot extract data from 'dbinfo'")
 	// server.Log("db", "url=" + dbUrl + ", user=" + dbUser)

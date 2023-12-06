@@ -107,7 +107,7 @@ func handleConfig(w http.ResponseWriter, req *http.Request, session *ModReportin
 	// happen. But we could look at resultInfo.totalRecords to
 	// determine whether this has happened.
 
-	tenant := session.server.folioSession.GetTenant()
+	tenant := session.folioSession.GetTenant()
 	config := make([]configItem, len(r.Items))
 	for i, item := range(r.Items) {
 		config[i], err = settingsItemToConfigItem(item, tenant)

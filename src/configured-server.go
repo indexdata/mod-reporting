@@ -3,9 +3,8 @@ package main
 import "os"
 import "fmt"
 import "github.com/MikeTaylor/catlogger"
-import "github.com/indexdata/foliogo"
 
-func MakeConfiguredServer(configFile string, httpRoot string, folioSession foliogo.Session) (*config, *ModReportingServer) {
+func MakeConfiguredServer(configFile string, httpRoot string) (*config, *ModReportingServer) {
 	var cfg *config
 	cfg, err := readConfig(configFile)
 	if err != nil {
@@ -17,6 +16,6 @@ func MakeConfiguredServer(configFile string, httpRoot string, folioSession folio
 	logger := catlogger.MakeLogger(cl.Categories, cl.Prefix, cl.Timestamp)
 	logger.Log("config", fmt.Sprintf("%+v", cfg))
 
-	server := MakeModReportingServer(cfg, logger, httpRoot, folioSession)
+	server := MakeModReportingServer(cfg, logger, httpRoot)
 	return cfg, server
 }
