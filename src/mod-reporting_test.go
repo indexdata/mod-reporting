@@ -7,20 +7,22 @@ import "time"
 import "net/http"
 import "io"
 import "regexp"
-import "github.com/indexdata/foliogo"
 
 func TestModReporting(t *testing.T) {
-	cfg, server := MakeConfiguredServer("../etc/config.json", "..", foliogo.Session{})
-	var err error
+	server, err := MakeConfiguredServer("../etc/config.json", "..")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Cannot create server: %s\n", err)
+		os.Exit(2)
+	}
 	go func() {
-		err = server.launch(cfg.Listen.Host + ":12369")
+		err = server.launch()
 	}()
 
 	// Allow half a second for the server to start. This is ugly
 	time.Sleep(time.Second / 2)
 	runTests(t, http.Client{})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Cannot create HTTP server:", err)
+		fmt.Fprintf(os.Stderr, "Cannot launch server: %s\n", err)
 		os.Exit(3)
 	}
 }
