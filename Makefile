@@ -8,6 +8,9 @@ target/ModuleDescriptor.json:
 target/mod-reporting:
 	(cd src; make)
 
+test:
+	(cd src; make test)
+
 clean:
 	(cd target; make clean)
 
