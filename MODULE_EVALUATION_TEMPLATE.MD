@@ -14,9 +14,22 @@ When performing a technical evaluation of a module, create a copy of this docume
 * [x] Uses Apache 2.0 license
 * [x] Module build MUST produce a valid module descriptor
 * [x] Module descriptor MUST include interface requirements for all consumed APIs
-* [ ] Third party dependencies use an Apache 2.0 compatible license
-  * [github.com/google/uuid uses BSD 3-Clause "New" or "Revised" License](https://github.com/google/uuid/blob/master/LICENSE), which [we expect to be whitelisted](https://folio-project.slack.com/archives/CAQ7L02PP/p1701694102115289)
-  * XXX more
+* [x] Third party dependencies use an Apache 2.0 compatible license
+  * Direct dependencies:
+    * [x] github.com/MikeTaylor/catlogger v0.0.2 uses Apache 2.0
+    * [x] github.com/google/uuid v1.4.0 uses  BSD 3-Clause "New" or "Revised" License](https://github.com/google/uuid/blob/master/LICENSE), which [we expect to be whitelisted](https://folio-project.slack.com/archives/CAQ7L02PP/p1701694102115289)
+    * [x] github.com/indexdata/foliogo v0.1.5 uses Apache 2.0
+    * [x] github.com/jackc/pgx/v5 v5.5.0 uses MIT Licence
+  * Indirect dependencies:
+    * [x] github.com/jackc/pgpassfile v1.0.0 uses MIT Licence
+    * [x] github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a uses MIT Licence
+    * [x] github.com/jackc/puddle/v2 v2.2.1 uses MIT Licence
+    * [x] github.com/smartystreets/goconvey v1.8.1 uses MIT Licence
+    * [x] golang.org/x/crypto v0.9.0 uses BSD-3-Clause
+    * [x] golang.org/x/sync v0.1.0 uses BSD-3-Clause
+    * [x] golang.org/x/text v0.9.0 uses BSD-3-Clause
+    * [x] moul.io/http2curl v1.0.0 uses Apache 2.0 or MIT Licence as we prefer
+  * Summary: this requirement is met provided that we determine the BSD-3-Clause and MIT licences to be Apache-compatible
 * [ ] Installation documentation is included
   * -_note: read more at https://github.com/folio-org/mod-search/blob/master/README.md_
 * [x] Personal data form is completed, accurate, and provided as `PERSONAL_DATA_DISCLOSURE.md` file
