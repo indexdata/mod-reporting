@@ -19,6 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: set tag variable
+      run: echo "TAG_NAME=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+      id: version
+
+    - name: whats the tag
+      run: echo ${{ steps.version.outputs.TAG_NAME }}
 
     - name: Fetch git tags
       run: git fetch --tags origin
