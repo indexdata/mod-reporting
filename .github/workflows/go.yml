@@ -27,8 +27,11 @@ jobs:
       with:
         go-version: '1.21.1'
 
-    - name: Build
-      run: make
+    - name: Build descriptors
+      run: make target/ModuleDescriptor.json
+
+    - name: Build program
+      run: make target/mod-reporting
 
     - name: Test
       run: make test
