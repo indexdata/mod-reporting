@@ -37,7 +37,7 @@ func runTests(t *testing.T, client http.Client) {
 		{"home", "", 200, "This is .*mod-reporting"},
 		{"health check", "admin/health", 200, "Behold!"},
 		{"short bad path", "foo", 404, ""},
-		{"long bad path", "foo/bar/baz", 405, ""},
+		{"long bad path", "foo/bar/baz", 404, ""},
 		// XXX more cases to come here
 	}
 
