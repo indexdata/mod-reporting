@@ -10,7 +10,7 @@ on:
       - '**.go'
       - 'etc/config.json'
       - 'Dockerfile' # Run this workflow first to ensure tests are passing
-      - '.github/workflows/go.yml'
+      - '.github/workflows/*.yml'
   pull_request:
     branches: [ "main" ]
 
