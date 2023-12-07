@@ -21,6 +21,7 @@ type config struct {
 	Listen          listenConfig                    `json:"listen"`
 }
 
+
 func readConfig(name string) (*config, error) {
 	jsonFile, err := os.Open(name)
 	if err != nil {
