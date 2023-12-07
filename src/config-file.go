@@ -4,6 +4,7 @@ import "os"
 import "io"
 import "encoding/json"
 
+
 type loggingConfig struct {
 	Categories string `json:"categories"`
 	Prefix     string `json:"prefix"`
