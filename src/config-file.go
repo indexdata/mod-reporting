@@ -4,6 +4,7 @@ import "os"
 import "io"
 import "encoding/json"
 
+
 type loggingConfig struct {
 	Categories string `json:"categories"`
 	Prefix     string `json:"prefix"`
@@ -19,6 +20,7 @@ type config struct {
 	Logging         loggingConfig                   `json:"logging"`
 	Listen          listenConfig                    `json:"listen"`
 }
+
 
 func readConfig(name string) (*config, error) {
 	jsonFile, err := os.Open(name)
