@@ -130,6 +130,7 @@ If running `mod-reporting` locally, you will likely run into CORS problems with 
 * [The `ldp-config-tool` utility](config-tool)
 * The old [`mod-ldp`](https://github.com/folio-org/mod-ldp) for which this is a replacement
 * FOLIO's Reporting app, [`ui-ldp`](https://github.com/folio-org/ui-ldp), which uses this module
+* [In-progress Module Acceptance assessment](doc/MODULE_EVALUATION_TEMPLATE.MD)
 
 
 
