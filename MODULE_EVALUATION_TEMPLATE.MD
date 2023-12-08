@@ -61,7 +61,7 @@ When performing a technical evaluation of a module, create a copy of this docume
 * [x] The module responds with a tenant's content based on x-okapi-tenant header
 * [x] Standard GET `/admin/health` endpoint returning a 200 response
   * -_note: read more at https://wiki.folio.org/display/DD/Back+End+Module+Health+Check+Protocol_
-* [ ] High Availability (HA) compliant
+* [x] High Availability (HA) compliant
   * Possible red flags:
     * Connection affinity / sticky sessions / etc. are used
     * Local container storage is used
