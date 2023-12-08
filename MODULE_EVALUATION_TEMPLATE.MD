@@ -30,7 +30,7 @@ When performing a technical evaluation of a module, create a copy of this docume
     * [x] golang.org/x/text v0.9.0 uses BSD-3-Clause
     * [x] moul.io/http2curl v1.0.0 uses Apache 2.0 or MIT Licence as we prefer
   * Summary: this requirement is met provided that we determine the BSD-3-Clause and MIT licences to be Apache-compatible
-* [ ] Installation documentation is included
+* [x] Installation documentation is included
   * -_note: read more at https://github.com/folio-org/mod-search/blob/master/README.md_
 * [x] Personal data form is completed, accurate, and provided as `PERSONAL_DATA_DISCLOSURE.md` file
 * [x] Sensitive and environment-specific information is not checked into git repository

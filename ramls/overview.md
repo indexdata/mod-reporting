@@ -1,10 +1,10 @@
-The FOLIO Reporting API provides simple mediated access to a reporting database (LDP Classic or MetaDB) hosted elsewhere (as configured in the `DB_HOST`, `DB_PORT` and `DB_DATABASE` environment variables). It provides only five entry points, each of them very simple:
+The FOLIO Reporting API provides simple mediated access to a reporting database (LDP Classic or MetaDB) hosted elsewhere. It provides only five entry points, each of them very simple:
 
 1. `/ldp/db/tables`: Request a list of all the tables in their various schemas
 2. `/ldp/db/columns`: Request a list of all the columns in a specified table. (The schema and table names are povided as URL query parameters)
 3. `/ldp/db/query`: Submit a query
 4. `/ldp/db/reports`: Run a report from a repository
-5. `/ldp/config` and `/ldp/config/{key}`: Simple key/valye configuration store
+5. `/ldp/config` and `/ldp/config/{key}`: Simple key/value configuration store
 
 Several types are defined to support these operations:
 * The first operation returns [`tables`](tables-schema.json), a list of table-and-schema-name pairs.
