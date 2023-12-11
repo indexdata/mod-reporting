@@ -1,6 +1,8 @@
+SRC=main.go configured-server.go config-file.go getdbinfo.go http-error.go server.go session.go ldp-config.go reporting.go
+TESTSRC=config-file_test.go ldp-config_test.go mod-reporting_test.go
 TARGET=../target/mod-reporting
 
-$(TARGET): main.go configured-server.go config-file.go getdbinfo.go http-error.go server.go session.go ldp-config.go reporting.go
+$(TARGET): $(SRC)
 	go build -o $@
 
 run: $(TARGET)
@@ -19,9 +21,14 @@ lint:
 	-ineffassign ./...
 	-deadcode
 
-test:
+test: c.out
+
+c.out: $(SRC) $(TESTSRC)
 	go test -v -coverprofile=c.out ./...
-	go tool cover -func=c.out | sed 's/^github.com\/indexdata\/mod-reporting\/src\///'
+	@echo "go tool cover -func=c.out | sed 's/^github.com\/indexdata\/mod-reporting\/src\///'"
+
+cover: c.out
+	go tool cover -html=c.out
 
 clean:
 	rm -f $(TARGET) c.out
