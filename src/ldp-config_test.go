@@ -29,7 +29,6 @@ func Test_handleConfig(t *testing.T) {
 	}))
 	defer ts.Close()
 	baseUrl := ts.URL
-	fmt.Printf("started test server on %s\n", baseUrl)
 
 	t.Run("fetch config", func(t *testing.T) {
 		session, err := NewModReportingSession(nil, baseUrl, "dummyTenant")
