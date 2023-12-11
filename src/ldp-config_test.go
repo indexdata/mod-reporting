@@ -1,7 +1,6 @@
 package main
 
 import "io"
-import "fmt"
 import "testing"
 import "gotest.tools/assert"
 import "net/http"
