@@ -8,8 +8,8 @@ import "net/http"
 import "net/http/httptest"
 
 
-func Test_handleConfig(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+func MakeDummyFolioServer() *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		fmt.Printf("path %s\n", req.URL.Path)
 		if (req.URL.Path == "/settings/entries") {
 			w.Write([]byte(`
@@ -33,6 +33,11 @@ func Test_handleConfig(t *testing.T) {
 			fmt.Fprintln(w, "Not found")
 		}
 	}))
+}
+
+
+func Test_handleConfig(t *testing.T) {
+	ts := MakeDummyFolioServer()
 	defer ts.Close()
 	baseUrl := ts.URL
 
