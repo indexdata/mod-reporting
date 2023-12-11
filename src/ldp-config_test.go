@@ -1,6 +1,7 @@
 package main
 
 import "io"
+import "fmt"
 import "testing"
 import "gotest.tools/assert"
 import "net/http"
@@ -8,8 +9,10 @@ import "net/http/httptest"
 
 
 func Test_handleConfig(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		fmt.Printf("path %s\n", req.URL.Path)
+		if (req.URL.Path == "/settings/entries") {
+			w.Write([]byte(`
 {
   "items": [
     {
@@ -25,6 +28,10 @@ func Test_handleConfig(t *testing.T) {
   }
 }
 `))
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "Not found")
+		}
 	}))
 	defer ts.Close()
 	baseUrl := ts.URL
