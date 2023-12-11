@@ -11,8 +11,8 @@ import "net/http/httptest"
 func MakeDummyFolioServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		fmt.Printf("path %s\n", req.URL.Path)
-		if (req.URL.Path == "/settings/entries") {
-			w.Write([]byte(`
+		if req.URL.Path == "/settings/entries" {
+			_, _ = w.Write([]byte(`
 {
   "items": [
     {
