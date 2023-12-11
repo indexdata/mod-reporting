@@ -1,0 +1,2 @@
+This is not a JSON file at all
+It is used in testing the config-file parser for the "not valid JSON" case
