@@ -1,0 +1,8 @@
+{
+  "COMMENT": "This is used for testing, hence the empty logging config",
+  "logging": {},
+  "listen": {
+    "host": "0.0.0.0",
+    "port": 12369
+  }
+}

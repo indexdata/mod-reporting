@@ -8,8 +8,9 @@ import "net/http"
 import "io"
 import "regexp"
 
+
 func TestModReporting(t *testing.T) {
-	server, err := MakeConfiguredServer("../etc/config.json", "..")
+	server, err := MakeConfiguredServer("../etc/silent.json", "..")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot create server: %s\n", err)
 		os.Exit(2)
@@ -26,6 +27,7 @@ func TestModReporting(t *testing.T) {
 		os.Exit(3)
 	}
 }
+
 
 func runTests(t *testing.T, client http.Client) {
 	data := []struct {
