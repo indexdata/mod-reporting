@@ -20,7 +20,7 @@ lint:
 	-deadcode
 
 test:
-	go test -coverprofile=c.out ./...
+	go test -v -coverprofile=c.out ./...
 	go tool cover -func=c.out | sed 's/^github.com\/indexdata\/mod-reporting\/src\///'
 
 clean:
