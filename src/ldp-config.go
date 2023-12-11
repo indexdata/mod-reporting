@@ -45,9 +45,6 @@ func fetchWithToken(req *http.Request, folioSession foliogo.Session, path string
 	token := req.Header.Get("X-Okapi-Token")
 	if token != "" {
 		params.Token = token
-	} else {
-		// It must be a session created, so it will handle the cookie we got when we logged in
-		// So there is nothing for us to do here
 	}
 
 	return folioSession.Fetch(path, params)
