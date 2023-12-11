@@ -10,8 +10,25 @@ import "net/http/httptest"
 
 func MakeDummyFolioServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		fmt.Printf("path %s\n", req.URL.Path)
-		if req.URL.Path == "/settings/entries" {
+		if req.URL.Path == "/settings/entries" &&
+			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="dbinfo"` {
+			_, _ = w.Write([]byte(`
+{
+  "items": [
+    {
+      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
+      "scope": "ui-ldp.admin",
+      "key": "dbinfo",
+      "value": "{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"
+    }
+  ],
+  "resultInfo": {
+    "totalRecords": 1,
+    "diagnostics": []
+  }
+}
+`))
+		} else if req.URL.Path == "/settings/entries" {
 			_, _ = w.Write([]byte(`
 {
   "items": [
@@ -41,10 +58,10 @@ func Test_handleConfig(t *testing.T) {
 	defer ts.Close()
 	baseUrl := ts.URL
 
-	t.Run("fetch config", func(t *testing.T) {
-		session, err := NewModReportingSession(nil, baseUrl, "dummyTenant")
-		assert.NilError(t, err)
+	session, err := NewModReportingSession(nil, baseUrl, "dummyTenant")
+	assert.NilError(t, err)
 
+	t.Run("fetch all configs", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", baseUrl + "/ldp/config", nil)
 		err = handleConfig(w, req, session)
@@ -56,4 +73,15 @@ func Test_handleConfig(t *testing.T) {
 		assert.Equal(t, string(body), `[{"key":"config","tenant":"dummyTenant","value":"{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"}]`)
 	})
 
+	t.Run("fetch single config", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", baseUrl + "/ldp/config/dbinfo", nil)
+		err = handleConfigKey(w, req, session)
+		assert.NilError(t, err)
+
+		resp := w.Result()
+		assert.Equal(t, resp.StatusCode, 200)
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(t, string(body), `{"key":"dbinfo","tenant":"dummyTenant","value":"{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"}`)
+	})
 }
