@@ -21,9 +21,7 @@ lint:
 	-ineffassign ./...
 	-deadcode
 
-test: c.out
-
-c.out: $(SRC) $(TESTSRC)
+test:
 	go test -v -coverprofile=c.out ./...
 	@echo "go tool cover -func=c.out | sed 's/^github.com\/indexdata\/mod-reporting\/src\///'"
 
