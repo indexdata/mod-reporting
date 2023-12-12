@@ -106,10 +106,14 @@ func Test_handleConfig(t *testing.T) {
 	session, err := NewModReportingSession(nil, baseUrl, "dummyTenant")
 	assert.NilError(t, err)
 
-	for _, test := range tests {
+	for i, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", baseUrl + test.path, nil)
+			if i == 0 {
+				// Just to exercise a code-path, and get slightly more coverage *sigh*
+				req.Header.Add("X-Okapi-Token", "dummy")
+			}
 			err = test.function(w, req, session)
 			resp := w.Result()
 
