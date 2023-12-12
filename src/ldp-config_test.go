@@ -39,7 +39,7 @@ var tests []testT = []testT{
 		"Not Found",
 	},
 	{
-		"fetch mailformed config",
+		"fetch malformed config",
 		"/ldp/config/bad",
 		handleConfigKey,
 		"",
