@@ -13,6 +13,7 @@ type testT struct {
 	path string
 	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 	expected string
+	errorstr string
 }
 
 var tests []testT = []testT{
@@ -20,13 +21,29 @@ var tests []testT = []testT{
 		"fetch all configs from table",
 		"/ldp/config",
 		handleConfig,
-		`[{"key":"config","tenant":"dummyTenant","value":"{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"}]`,
+		`[{"key":"config","tenant":"dummyTenant","value":"v1"}]`,
+		"",
 	},
 	{
 		"fetch single config",
 		"/ldp/config/dbinfo",
 		handleConfigKey,
 		`{"key":"dbinfo","tenant":"dummyTenant","value":"v2"}`,
+		"",
+	},
+	{
+		"non-existent config",
+		"/ldp/config/not-there",
+		handleConfigKey,
+		"",
+		"Not Found",
+	},
+	{
+		"fetch mailformed config",
+		"/ldp/config/bad",
+		handleConfigKey,
+		"",
+	        "could not deserialize",
 	},
 }
 
@@ -43,7 +60,7 @@ func MakeDummyFolioServer() *httptest.Server {
       "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43b",
       "scope": "ui-ldp.admin",
       "key": "config",
-      "value": "{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"
+      "value": "v1"
     }
   ],
   "resultInfo": {
@@ -70,6 +87,9 @@ func MakeDummyFolioServer() *httptest.Server {
   }
 }
 `))
+		} else if req.URL.Path == "/settings/entries" &&
+			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="bad"` {
+			_, _ = w.Write([]byte("some bit of text"))
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "Not found")
@@ -91,12 +111,16 @@ func Test_handleConfig(t *testing.T) {
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", baseUrl + test.path, nil)
 			err = test.function(w, req, session)
-			assert.NilError(t, err)
-
 			resp := w.Result()
-			assert.Equal(t, resp.StatusCode, 200)
-			body, _ := io.ReadAll(resp.Body)
-			assert.Equal(t, string(body), test.expected)
+
+			if test.errorstr == "" {
+				assert.NilError(t, err)
+				assert.Equal(t, resp.StatusCode, 200)
+				body, _ := io.ReadAll(resp.Body)
+				assert.Equal(t, string(body), test.expected)
+			} else {
+				assert.ErrorContains(t, err, test.errorstr)
+			}
 		})
 	}
 }
