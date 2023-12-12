@@ -66,6 +66,7 @@ var tests []testT = []testT{
 	        "could not fetch from mod-settings",
 		true,
 	},
+	// At this point it seems silly to laboriously chase each individual error case
 }
 
 
