@@ -8,17 +8,41 @@ import "net/http"
 import "net/http/httptest"
 
 
+type testT struct {
+	name string
+	path string
+	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
+	expected string
+}
+
+var tests []testT = []testT{
+	{
+		"fetch all configs from table",
+		"/ldp/config",
+		handleConfig,
+		`[{"key":"config","tenant":"dummyTenant","value":"{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"}]`,
+	},
+	{
+		"fetch single config",
+		"/ldp/config/dbinfo",
+		handleConfigKey,
+		`{"key":"dbinfo","tenant":"dummyTenant","value":"v2"}`,
+	},
+}
+
+
 func MakeDummyFolioServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		fmt.Printf("path=%s query=%s\n", req.URL.Path, req.URL.RawQuery)
 		if req.URL.Path == "/settings/entries" &&
-			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="dbinfo"` {
+			req.URL.RawQuery == `query=scope=="ui-ldp.admin"` {
 			_, _ = w.Write([]byte(`
 {
   "items": [
     {
-      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
+      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43b",
       "scope": "ui-ldp.admin",
-      "key": "dbinfo",
+      "key": "config",
       "value": "{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"
     }
   ],
@@ -28,15 +52,16 @@ func MakeDummyFolioServer() *httptest.Server {
   }
 }
 `))
-		} else if req.URL.Path == "/settings/entries" {
+		} else if req.URL.Path == "/settings/entries" &&
+			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="dbinfo"` {
 			_, _ = w.Write([]byte(`
 {
   "items": [
     {
-      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43b",
+      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
       "scope": "ui-ldp.admin",
-      "key": "config",
-      "value": "{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"
+      "key": "dbinfo",
+      "value": "v2"
     }
   ],
   "resultInfo": {
@@ -54,16 +79,6 @@ func MakeDummyFolioServer() *httptest.Server {
 
 
 func Test_handleConfig(t *testing.T) {
-	tests := []struct {
-		name string
-		path string
-		function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
-		expected string
-	}{
-		{"fetch all configs from table", "/ldp/config", handleConfig,`[{"key":"config","tenant":"dummyTenant","value":"{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"}]`},
-		{"fetch single config", "/ldp/config/dbinfo", handleConfigKey, `{"key":"dbinfo","tenant":"dummyTenant","value":"{\"defaultShow\":100,\"maxShow\":1000,\"maxExport\":\"100000\",\"disabledTables\":[],\"tqTabs\":[]}"}`},
-	}
-
 	ts := MakeDummyFolioServer()
 	defer ts.Close()
 	baseUrl := ts.URL
