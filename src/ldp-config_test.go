@@ -14,6 +14,7 @@ type testT struct {
 	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 	expected string
 	errorstr string
+	useBadServer bool
 }
 
 var tests []testT = []testT{
@@ -23,6 +24,7 @@ var tests []testT = []testT{
 		handleConfig,
 		`[{"key":"config","tenant":"dummyTenant","value":"v1"}]`,
 		"",
+		false,
 	},
 	{
 		"fetch single config",
@@ -30,6 +32,7 @@ var tests []testT = []testT{
 		handleConfigKey,
 		`{"key":"dbinfo","tenant":"dummyTenant","value":"v2"}`,
 		"",
+		false,
 	},
 	{
 		"non-existent config",
@@ -37,6 +40,7 @@ var tests []testT = []testT{
 		handleConfigKey,
 		"",
 		"Not Found",
+		false,
 	},
 	{
 		"fetch malformed config",
@@ -44,6 +48,23 @@ var tests []testT = []testT{
 		handleConfigKey,
 		"",
 	        "could not deserialize",
+		false,
+	},
+	{
+		"translate non-string value",
+		"/ldp/config/non-string",
+		handleConfigKey,
+		`{"key":"non-string","tenant":"dummyTenant","value":"{\"v3\":42}"}`,
+	        "",
+		false,
+	},
+	{
+		"failure to reach mod-settings",
+		"/ldp/config/non-string",
+		handleConfig,
+		"",
+	        "could not fetch from mod-settings",
+		true,
 	},
 }
 
@@ -88,6 +109,24 @@ func MakeDummyFolioServer() *httptest.Server {
 }
 `))
 		} else if req.URL.Path == "/settings/entries" &&
+			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="non-string"` {
+			_, _ = w.Write([]byte(`
+{
+  "items": [
+    {
+      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
+      "scope": "ui-ldp.admin",
+      "key": "non-string",
+      "value": { "v3": 42 }
+    }
+  ],
+  "resultInfo": {
+    "totalRecords": 1,
+    "diagnostics": []
+  }
+}
+`))
+		} else if req.URL.Path == "/settings/entries" &&
 			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="bad"` {
 			_, _ = w.Write([]byte("some bit of text"))
 		} else {
@@ -105,6 +144,8 @@ func Test_handleConfig(t *testing.T) {
 
 	session, err := NewModReportingSession(nil, baseUrl, "dummyTenant")
 	assert.NilError(t, err)
+	badSession, err := NewModReportingSession(nil, "x" + baseUrl, "dummyTenant")
+	assert.NilError(t, err)
 
 	for i, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -114,7 +155,11 @@ func Test_handleConfig(t *testing.T) {
 				// Just to exercise a code-path, and get slightly more coverage *sigh*
 				req.Header.Add("X-Okapi-Token", "dummy")
 			}
-			err = test.function(w, req, session)
+			var currentSession = session
+			if test.useBadServer {
+				currentSession = badSession
+			}
+			err = test.function(w, req, currentSession)
 			resp := w.Result()
 
 			if test.errorstr == "" {
