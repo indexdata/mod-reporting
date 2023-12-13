@@ -9,7 +9,7 @@ import "net/http"
 import "net/http/httptest"
 
 
-func MakeDummyFolioServer() *httptest.Server {
+func MakeDummyModSettingsServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.URL.Path == "/settings/entries" &&
 			req.URL.RawQuery == `query=scope=="ui-ldp.admin"` {
@@ -147,7 +147,7 @@ var tests []testT = []testT{
 
 
 func Test_handleConfig(t *testing.T) {
-	ts := MakeDummyFolioServer()
+	ts := MakeDummyModSettingsServer()
 	defer ts.Close()
 	baseUrl := ts.URL
 
