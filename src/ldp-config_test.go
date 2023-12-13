@@ -79,6 +79,8 @@ func MakeDummyModSettingsServer() *httptest.Server {
 			    }
 			  }
 			`))
+		} else if req.URL.Path == "/settings/entries/75c12fcb-ba6c-463f-a5fc-cb0587b7d43c" {
+			// Nothing to do
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "Not found")
@@ -136,11 +138,18 @@ var tests []testT = []testT{
 		useBadServer: true,
 	},
 	{
-		name: "write a config value",
+		name: "write a new config value",
 		path: "/ldp/config/foo",
 		putData: `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`,
 		function: handleConfigKey,
 		expected: "abc123",
+	},
+	{
+		name: "rewrite an existing config value",
+		path: "/ldp/config/dbinfo",
+		putData: `{"key":"dbinfo","tenant":"xxx","value":"{\"user\":\"abc456\"}"}`,
+		function: handleConfigKey,
+		expected: "abc456",
 	},
 	// At this point it seems silly to laboriously chase each individual error case
 }
