@@ -14,71 +14,71 @@ func MakeDummyModSettingsServer() *httptest.Server {
 		if req.URL.Path == "/settings/entries" &&
 			req.URL.RawQuery == `query=scope=="ui-ldp.admin"` {
 			_, _ = w.Write([]byte(`
-{
-  "items": [
-    {
-      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43b",
-      "scope": "ui-ldp.admin",
-      "key": "config",
-      "value": "v1"
-    }
-  ],
-  "resultInfo": {
-    "totalRecords": 1,
-    "diagnostics": []
-  }
-}
-`))
+			  {
+			    "items": [
+			      {
+				"id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43b",
+				"scope": "ui-ldp.admin",
+				"key": "config",
+				"value": "v1"
+			      }
+			    ],
+			    "resultInfo": {
+			      "totalRecords": 1,
+			      "diagnostics": []
+			    }
+			  }
+			`))
 		} else if req.URL.Path == "/settings/entries" &&
 			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="dbinfo"` {
 			_, _ = w.Write([]byte(`
-{
-  "items": [
-    {
-      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
-      "scope": "ui-ldp.admin",
-      "key": "dbinfo",
-      "value": "v2"
-    }
-  ],
-  "resultInfo": {
-    "totalRecords": 1,
-    "diagnostics": []
-  }
-}
-`))
+			  {
+			    "items": [
+			      {
+				"id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
+				"scope": "ui-ldp.admin",
+				"key": "dbinfo",
+				"value": "v2"
+			      }
+			    ],
+			    "resultInfo": {
+			      "totalRecords": 1,
+			      "diagnostics": []
+			    }
+			  }
+			`))
 		} else if req.URL.Path == "/settings/entries" &&
 			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="non-string"` {
 			_, _ = w.Write([]byte(`
-{
-  "items": [
-    {
-      "id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
-      "scope": "ui-ldp.admin",
-      "key": "non-string",
-      "value": { "v3": 42 }
-    }
-  ],
-  "resultInfo": {
-    "totalRecords": 1,
-    "diagnostics": []
-  }
-}
-`))
+			  {
+			    "items": [
+			      {
+				"id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
+				"scope": "ui-ldp.admin",
+				"key": "non-string",
+				"value": { "v3": 42 }
+			      }
+			    ],
+			    "resultInfo": {
+			      "totalRecords": 1,
+			      "diagnostics": []
+			    }
+			  }
+			`))
 		} else if req.URL.Path == "/settings/entries" &&
 			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="bad"` {
 			_, _ = w.Write([]byte("some bit of text"))
 		} else if req.URL.Path == "/settings/entries" {
 			// Searching for some other setting, e.g. "score" before trying to write to it
 			_, _ = w.Write([]byte(`
-{
-  "items": [],
-  "resultInfo": {
-    "totalRecords": 0,
-    "diagnostics": []
-  }
-}
-`))
+			  {
+			    "items": [],
+			    "resultInfo": {
+			      "totalRecords": 0,
+			      "diagnostics": []
+			    }
+			  }
+			`))
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "Not found")
