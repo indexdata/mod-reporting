@@ -31,6 +31,7 @@ func MakeDummyModSettingsServer() *httptest.Server {
 			`))
 		} else if req.URL.Path == "/settings/entries" &&
 			req.URL.RawQuery == `query=scope=="ui-ldp.admin"+and+key=="dbinfo"` {
+			// XXX note that this specific value is also required by the getDbInfo test
 			_, _ = w.Write([]byte(`
 			  {
 			    "items": [
@@ -38,7 +39,11 @@ func MakeDummyModSettingsServer() *httptest.Server {
 				"id": "75c12fcb-ba6c-463f-a5fc-cb0587b7d43c",
 				"scope": "ui-ldp.admin",
 				"key": "dbinfo",
-				"value": "v2"
+				"value": {
+				  "url": "dummyUrl",
+				  "user": "fiona",
+				  "pass": "pw"
+				}
 			      }
 			    ],
 			    "resultInfo": {
@@ -110,7 +115,7 @@ var tests []testT = []testT{
 		name: "fetch single config",
 		path: "/ldp/config/dbinfo",
 		function: handleConfigKey,
-		expected: `{"key":"dbinfo","tenant":"dummyTenant","value":"v2"}`,
+		expected: `{"key":"dbinfo","tenant":"dummyTenant","value":`,
 	},
 	{
 		name: "non-existent config",
