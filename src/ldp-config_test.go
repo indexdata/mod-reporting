@@ -9,65 +9,6 @@ import "net/http"
 import "net/http/httptest"
 
 
-type testT struct {
-	name string
-	path string
-	putData string
-	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
-	expected string
-	errorstr string
-	useBadServer bool
-}
-
-var tests []testT = []testT{
-	{
-		name: "fetch all configs from table",
-		path: "/ldp/config",
-		function: handleConfig,
-		expected: `[{"key":"config","tenant":"dummyTenant","value":"v1"}]`,
-	},
-	{
-		name: "fetch single config",
-		path: "/ldp/config/dbinfo",
-		function: handleConfigKey,
-		expected: `{"key":"dbinfo","tenant":"dummyTenant","value":"v2"}`,
-	},
-	{
-		name: "non-existent config",
-		path: "/ldp/config/not-there",
-		function: handleConfigKey,
-		errorstr: "no config item with key",
-	},
-	{
-		name: "fetch malformed config",
-		path: "/ldp/config/bad",
-		function: handleConfigKey,
-	        errorstr: "could not deserialize",
-	},
-	{
-		name: "translate non-string value",
-		path: "/ldp/config/non-string",
-		function: handleConfigKey,
-		expected: `{"key":"non-string","tenant":"dummyTenant","value":"{\\|"v3\\\":42}"}`,
-	},
-	{
-		name: "failure to reach mod-settings",
-		path: "/ldp/config/non-string",
-		function: handleConfig,
-	        errorstr: "could not fetch from mod-settings",
-		useBadServer: true,
-	},
-	{
-		name: "write a config value",
-		path: "/ldp/config/foo",
-		putData: `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`,
-		function: handleConfigKey,
-		expected: "abc123",
-	},
-	// At this point it seems silly to laboriously chase each individual error case
-}
-
-
 func MakeDummyFolioServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.URL.Path == "/settings/entries" &&
@@ -143,6 +84,65 @@ func MakeDummyFolioServer() *httptest.Server {
 			fmt.Fprintln(w, "Not found")
 		}
 	}))
+}
+
+
+type testT struct {
+	name string
+	path string
+	putData string
+	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
+	expected string
+	errorstr string
+	useBadServer bool
+}
+
+var tests []testT = []testT{
+	{
+		name: "fetch all configs from table",
+		path: "/ldp/config",
+		function: handleConfig,
+		expected: `[{"key":"config","tenant":"dummyTenant","value":"v1"}]`,
+	},
+	{
+		name: "fetch single config",
+		path: "/ldp/config/dbinfo",
+		function: handleConfigKey,
+		expected: `{"key":"dbinfo","tenant":"dummyTenant","value":"v2"}`,
+	},
+	{
+		name: "non-existent config",
+		path: "/ldp/config/not-there",
+		function: handleConfigKey,
+		errorstr: "no config item with key",
+	},
+	{
+		name: "fetch malformed config",
+		path: "/ldp/config/bad",
+		function: handleConfigKey,
+	        errorstr: "could not deserialize",
+	},
+	{
+		name: "translate non-string value",
+		path: "/ldp/config/non-string",
+		function: handleConfigKey,
+		expected: `{"key":"non-string","tenant":"dummyTenant","value":"{\\|"v3\\\":42}"}`,
+	},
+	{
+		name: "failure to reach mod-settings",
+		path: "/ldp/config/non-string",
+		function: handleConfig,
+	        errorstr: "could not fetch from mod-settings",
+		useBadServer: true,
+	},
+	{
+		name: "write a config value",
+		path: "/ldp/config/foo",
+		putData: `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`,
+		function: handleConfigKey,
+		expected: "abc123",
+	},
+	// At this point it seems silly to laboriously chase each individual error case
 }
 
 
