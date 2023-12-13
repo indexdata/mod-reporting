@@ -26,7 +26,7 @@ test:
 	@echo "go tool cover -func=c.out | sed 's/^github.com\/indexdata\/mod-reporting\/src\///'"
 
 test1:
-	go test -v . -run Test_handleConfig
+	go test -v -coverprofile=c.out . -run Test_handleConfig
 
 cover: c.out
 	go tool cover -html=c.out
