@@ -210,7 +210,6 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, session *ModReport
 		"key": key,
 		"value": item.Value,
 	}
-	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
 	_, err = fetchWithToken(req, session.folioSession, path, foliogo.RequestParams{
 		Method: method,
 		Json: simpleSettingsItem,
