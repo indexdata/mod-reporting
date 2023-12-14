@@ -4,15 +4,24 @@ import "context"
 import "strings"
 import "fmt"
 import "github.com/indexdata/foliogo"
+import "github.com/jackc/pgx/v5"
 import "github.com/jackc/pgx/v5/pgxpool"
+import "github.com/jackc/pgx/v5/pgconn" // just for the data-type pgconn.CommandTag
 
+
+type PgxIface interface {
+	Begin(context.Context) (pgx.Tx, error)
+	Query(context.Context, string, ...any) (pgx.Rows, error)
+	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
+	Close()
+}
 
 type ModReportingSession struct {
 	server *ModReportingServer // back-reference
 	url string
 	tenant string
 	folioSession foliogo.Session
-	dbConn *pgxpool.Pool
+	dbConn PgxIface
 }
 
 
@@ -65,7 +74,7 @@ func (session *ModReportingSession)Log(cat string, args ...string) {
 }
 
 
-func (session *ModReportingSession) findDbConn() (*pgxpool.Pool, error) {
+func (session *ModReportingSession) findDbConn() (PgxIface, error) {
 	if session.dbConn == nil {
 		dbUrl, dbUser, dbPass, err := getDbInfo(session.folioSession)
 		if err != nil {

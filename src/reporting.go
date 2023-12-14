@@ -8,7 +8,6 @@ import "regexp"
 import "net/http"
 import "encoding/json"
 import "github.com/jackc/pgx/v5"
-import "github.com/jackc/pgx/v5/pgxpool"
 
 
 type dbTable struct {
@@ -39,7 +38,7 @@ func handleTables(w http.ResponseWriter, req *http.Request, session *ModReportin
 }
 
 
-func fetchTables(dbConn *pgxpool.Pool) ([]dbTable, error) {
+func fetchTables(dbConn PgxIface) ([]dbTable, error) {
 	query := "SELECT schema_name, table_name FROM metadb.base_table"
 	rows, err := dbConn.Query(context.Background(), query)
 	if err != nil {
@@ -72,7 +71,7 @@ func handleColumns(w http.ResponseWriter, req *http.Request, session *ModReporti
 }
 
 
-func fetchColumns(dbConn *pgxpool.Pool, schema string, table string) ([]dbColumn, error) {
+func fetchColumns(dbConn PgxIface, schema string, table string) ([]dbColumn, error) {
 	// This seems to work for both MetaDB and LDP Classic
 	cols := "column_name, data_type, ordinal_position, table_schema, table_name"
 	query := "SELECT " + cols + " FROM information_schema.columns " +
