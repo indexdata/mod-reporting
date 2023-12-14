@@ -1,7 +1,8 @@
 package main
 
+import "reflect"
 import "testing"
-import "gotest.tools/assert"
+import "github.com/stretchr/testify/assert"
 
 
 func Test_readConfig(t *testing.T) {
@@ -9,6 +10,7 @@ func Test_readConfig(t *testing.T) {
 		cfg, err := readConfig("/no/such/file.json")
 		var nilConfig *config
 		assert.Equal(t, cfg, nilConfig)
+		assert.Nil(t, cfg)
 		assert.Error(t, err, "open /no/such/file.json: no such file or directory")
 	})
 
@@ -21,13 +23,13 @@ func Test_readConfig(t *testing.T) {
 
 	t.Run("well-known config file", func(t *testing.T) {
 		cfg, err := readConfig("../etc/silent.json")
-		assert.NilError(t, err)
-		assert.DeepEqual(t, cfg, &config{
+		assert.Nil(t, err)
+		assert.True(t, reflect.DeepEqual(cfg, &config{
 			Logging: loggingConfig{},
 			Listen: listenConfig{
 				Host: "0.0.0.0",
 				Port: 12369,
 			},
-		})
+		}))
 	})
 }
