@@ -81,6 +81,12 @@ func fetchColumns(dbConn PgxIface, schema string, table string) ([]dbColumn, err
 		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
 	}
 	defer rows.Close()
+	/*
+	for rows.Next() {
+		val, _ := rows.Values()
+		fmt.Printf("column 3: %T, %+v\n", val[2], val[2])
+	}
+	*/
 
 	return pgx.CollectRows(rows, pgx.RowToStructByName[dbColumn])
 }
