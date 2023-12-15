@@ -17,6 +17,15 @@ func Test_handleTables(t *testing.T) {
 	session, err := NewModReportingSession(mrs, baseUrl, "dummyTenant")
 	assert.Nil(t, err)
 
+	t.Run("unable to obtain DB connection", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "http://example.com/dummy", nil)
+		w := httptest.NewRecorder()
+		err = handleTables(w, req, session)
+
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "failed to connect")
+	})
+
 	mock, err := pgxmock.NewPool()
 	assert.Nil(t, err)
 	defer mock.Close()
@@ -34,8 +43,9 @@ func Test_handleTables(t *testing.T) {
 		resp := w.Result()
 
 		assert.Nil(t, err)
-		assert.Equal(t, resp.StatusCode, 200)
+		assert.Equal(t, 200, resp.StatusCode)
 		body, _ := io.ReadAll(resp.Body)
-		assert.Equal(t, `[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}]`, string(body))
+		assert.Equal(t, string(body), `[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}]`)
+		assert.Nil(t, mock.ExpectationsWereMet(), "unfulfilled expections")
 	})
 }
