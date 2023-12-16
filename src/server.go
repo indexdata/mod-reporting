@@ -7,7 +7,7 @@ import "strings"
 import "github.com/MikeTaylor/catlogger"
 
 
-type handlerFn func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error;
+type handlerFn func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 
 
 type ModReportingServer struct {

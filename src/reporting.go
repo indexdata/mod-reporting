@@ -75,7 +75,7 @@ func fetchColumns(dbConn PgxIface, schema string, table string) ([]dbColumn, err
 	// This seems to work for both MetaDB and LDP Classic
 	cols := "column_name, data_type, ordinal_position, table_schema, table_name"
 	query := "SELECT " + cols + " FROM information_schema.columns " +
-		"WHERE table_schema = $1 AND table_name = $2 AND column_name != $3";
+		"WHERE table_schema = $1 AND table_name = $2 AND column_name != $3"
 	rows, err := dbConn.Query(context.Background(), query, schema, table, "data")
 	if err != nil {
 		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
