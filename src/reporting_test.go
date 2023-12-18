@@ -10,6 +10,12 @@ import "net/http/httptest"
 
 var reportingTests []testT = []testT{
 	{
+		name: "unable to obtain DB connection",
+		useBadSession: true,
+		function: handleTables,
+		errorstr: "failed to connect",
+	},
+	{
 		name: "retrieve list of tables",
 		path: "/ldp/db/tables",
 		establishMock: func(data interface{}) error {
@@ -63,20 +69,9 @@ func Test_handleTables(t *testing.T) {
 	session, err := NewModReportingSession(mrs, baseUrl, "dummyTenant")
 	assert.Nil(t, err)
 
-
-	t.Run("unable to obtain DB connection", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "http://example.com/dummy", nil)
-		w := httptest.NewRecorder()
-		err = handleTables(w, req, session)
-
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "failed to connect")
-	})
-
 	mock, err := pgxmock.NewPool()
 	assert.Nil(t, err)
 	defer mock.Close()
-	session.dbConn = mock
 
 	for _, test := range reportingTests {
 		t.Run(test.name, func(t *testing.T) {
@@ -91,6 +86,12 @@ func Test_handleTables(t *testing.T) {
 			if test.establishMock != nil {
 				err = test.establishMock(mock)
 				assert.Nil(t, err)
+			}
+
+			if test.useBadSession {
+				session.dbConn = nil
+			} else {
+				session.dbConn = mock
 			}
 
 			w := httptest.NewRecorder()
