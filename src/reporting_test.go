@@ -10,9 +10,16 @@ import "net/http/httptest"
 
 var reportingTests []testT = []testT{
 	{
-		name: "unable to obtain DB connection",
+		name: "bad DB connection for tables",
 		useBadSession: true,
 		function: handleTables,
+		errorstr: "failed to connect",
+	},
+	{
+		name: "bad DB connection for columns",
+		path: "/ldp/db/columns?schema=folio_users&table=users",
+		useBadSession: true,
+		function: handleColumns,
 		errorstr: "failed to connect",
 	},
 	{
