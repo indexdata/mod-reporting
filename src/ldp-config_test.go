@@ -102,7 +102,7 @@ type testT struct {
 	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 	expected string
 	errorstr string
-	useBadServer bool
+	useBadSession bool
 }
 
 var ldpConfigTests []testT = []testT{
@@ -141,7 +141,7 @@ var ldpConfigTests []testT = []testT{
 		path: "/ldp/config/non-string",
 		function: handleConfig,
 	        errorstr: "could not fetch from mod-settings",
-		useBadServer: true,
+		useBadSession: true,
 	},
 	{
 		name: "write a new config value",
@@ -186,7 +186,7 @@ func Test_handleConfig(t *testing.T) {
 			}
 
 			var currentSession = session
-			if test.useBadServer {
+			if test.useBadSession {
 				currentSession = badSession
 			}
 
