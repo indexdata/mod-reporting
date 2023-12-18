@@ -97,7 +97,7 @@ func MakeDummyModSettingsServer() *httptest.Server {
 type testT struct {
 	name string
 	path string
-	putData string
+	sendData string
 	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 	expected string
 	errorstr string
@@ -145,14 +145,14 @@ var tests []testT = []testT{
 	{
 		name: "write a new config value",
 		path: "/ldp/config/foo",
-		putData: `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`,
+		sendData: `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`,
 		function: handleConfigKey,
 		expected: "abc123",
 	},
 	{
 		name: "rewrite an existing config value",
 		path: "/ldp/config/dbinfo",
-		putData: `{"key":"dbinfo","tenant":"xxx","value":"{\"user\":\"abc456\"}"}`,
+		sendData: `{"key":"dbinfo","tenant":"xxx","value":"{\"user\":\"abc456\"}"}`,
 		function: handleConfigKey,
 		expected: "abc456",
 	},
@@ -174,9 +174,9 @@ func Test_handleConfig(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			method := "GET"
 			var reader io.Reader
-			if test.putData != "" {
+			if test.sendData != "" {
 				method = "PUT"
-				reader = strings.NewReader(test.putData)
+				reader = strings.NewReader(test.sendData)
 			}
 			req := httptest.NewRequest(method, baseUrl + test.path, reader)
 			if i == 0 {
