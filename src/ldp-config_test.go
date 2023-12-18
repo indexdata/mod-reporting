@@ -98,6 +98,7 @@ type testT struct {
 	name string
 	path string
 	sendData string
+	establishMock func(data interface{}) error
 	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 	expected string
 	errorstr string
