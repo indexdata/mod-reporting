@@ -104,7 +104,7 @@ type testT struct {
 	useBadServer bool
 }
 
-var tests []testT = []testT{
+var ldpConfigTests []testT = []testT{
 	{
 		name: "fetch all configs from table",
 		path: "/ldp/config",
@@ -170,7 +170,7 @@ func Test_handleConfig(t *testing.T) {
 	badSession, err := NewModReportingSession(nil, "x" + baseUrl, "dummyTenant")
 	assert.Nil(t, err)
 
-	for i, test := range tests {
+	for i, test := range ldpConfigTests {
 		t.Run(test.name, func(t *testing.T) {
 			method := "GET"
 			var reader io.Reader
