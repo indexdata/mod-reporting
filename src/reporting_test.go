@@ -63,6 +63,77 @@ var reportingTests []testT = []testT{
 		function: handleColumns,
 		expected: `{"columnName":"id","data_type":"uuid","tableSchema":"folio_users","tableName":"users","ordinalPosition":"6"},{"columnName":"creation_date","data_type":"timestamp without time zone","tableSchema":"folio_users","tableName":"users","ordinalPosition":"8"}]`,
 	},
+	{
+		name: "fail non-JSON query",
+		path: "/ldp/db/query",
+		sendData: "water",
+		function: handleQuery,
+		errorstr: "deserialize JSON",
+	},
+	{
+		name: "fail non-JSON query",
+		path: "/ldp/db/query",
+		sendData: `{}`,
+		function: handleQuery,
+		errorstr: "must have exactly one table",
+	},
+	{
+		name: "fail JSON query where tables is number",
+		path: "/ldp/db/query",
+		sendData: `{ "tables": 42 }`,
+		function: handleQuery,
+		errorstr: "cannot unmarshal number",
+	},
+	{
+		name: "fail JSON query where tables is string",
+		path: "/ldp/db/query",
+		sendData: `{ "tables": "water" }`,
+		function: handleQuery,
+		errorstr: "cannot unmarshal string",
+	},
+	{
+		name: "fail JSON query with 0 tables",
+		path: "/ldp/db/query",
+		sendData: `{ "tables": [] }`,
+		function: handleQuery,
+		errorstr: "must have exactly one table",
+	},
+	{
+		name: "fail JSON query with 2 tables",
+		path: "/ldp/db/query",
+		sendData: `{ "tables": [{}, {}] }`,
+		function: handleQuery,
+		errorstr: "must have exactly one table",
+	},
+	{
+		name: "fail JSON query where table is number",
+		path: "/ldp/db/query",
+		sendData: `{ "tables": [42] }`,
+		function: handleQuery,
+		errorstr: "cannot unmarshal number",
+	},
+	{
+		name: "fail JSON query where table is string",
+		path: "/ldp/db/query",
+		sendData: `{ "tables": ["water"] }`,
+		function: handleQuery,
+		errorstr: "cannot unmarshal string",
+	},
+	{
+		name: "simple query with dummy reslts",
+		path: "/ldp/db/query",
+		sendData: `{ "tables": [{ "schema": "folio", "tableName": "users" }] }`,
+		establishMock: func(data interface{}) error {
+			mock := data.(pgxmock.PgxPoolIface)
+			mock.ExpectQuery(`SELECT \* FROM "folio"."users"`).
+				WillReturnRows(pgxmock.NewRows([]string{"name", "email"}).
+					AddRow("mike", "mike@example.com").
+					AddRow("fiona", "fiona@example.com"))
+			return nil
+		},
+		function: handleQuery,
+		expected: `[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}]`,
+	},
 }
 
 
