@@ -26,6 +26,54 @@ func Test_makeSql(t *testing.T) {
 			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users" }] }`,
 			expected: `SELECT * FROM "folio"."users"`,
 		},
+		{
+			name: "query with columns",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users",
+				 "showColumns": ["id", "username"] }] }`,
+			expected: `SELECT id, username FROM "folio"."users"`,
+			expectedArgs: []string{},
+		},
+		{
+			name: "query with implicit condition",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users",
+				"columnFilters": [
+					{ "key": "id", "value": "43" }
+				] }] }`,
+			expected: `SELECT * FROM "folio"."users" WHERE id = $1`,
+			expectedArgs: []string{"43"},
+		},
+		{
+			name: "query with multiple conditions",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users",
+				"columnFilters": [
+					{ "key": "id", "op": ">", "value": "42" },
+					{ "key": "user", "op": "LIKE", "value": "mi%" }
+				] }] }`,
+			expected: `SELECT * FROM "folio"."users" WHERE id > $1 AND user LIKE $2`,
+			expectedArgs: []string{"42", "mi%"},
+		},
+		{
+			name: "query with order",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users",
+				"orderBy": [
+					{ "key": "user", "direction": "asc", "nulls": "start" },
+					{ "key": "id", "direction": "desc", "nulls": "end" }
+				] }] }`,
+			expected: `SELECT * FROM "folio"."users" ORDER BY user asc NULLS FIRST, id desc NULLS LAST`,
+			expectedArgs: []string{},
+		},
+		{
+			name: "query with limit",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users", "limit": 99 }] }`,
+			expected: `SELECT * FROM "folio"."users" LIMIT 99`,
+			expectedArgs: []string{},
+		},
+		{
+			name: "make me one with everything",
+			sendData: `{ "tables": [{"limit": 11,"schema": "folio_inventory","orderBy": [{"direction": "asc","nulls": "end","key": "status_updated_date"},{"direction": "asc","nulls": "start","key": "__id"}],"showColumns": ["id","status_updated_date","hrid","title","source"],"columnFilters": [{"key": "status_updated_date","op": ">=","value": "2022-06-09T19:01:33.757+00:00"},{"key": "hrid","op": "<>","value": "in00000000005"}],"tableName": "instance__t"}]}`,
+			expected: `SELECT id, status_updated_date, hrid, title, source FROM "folio_inventory"."instance__t" WHERE status_updated_date >= $1 AND hrid <> $2 ORDER BY status_updated_date asc NULLS LAST, __id asc NULLS FIRST LIMIT 11`,
+			expectedArgs: []string{"2022-06-09T19:01:33.757+00:00", "in00000000005"},
+		},
 	}
 
 	for _, test := range tests {
@@ -38,7 +86,10 @@ func Test_makeSql(t *testing.T) {
 			if test.errorstr == "" {
 				assert.Nil(t, err)
 				assert.Equal(t, test.expected, sql)
-				assert.Equal(t, 0, len(params)) // XXX make this configurable
+				assert.Equal(t, len(test.expectedArgs), len(params))
+				for i, val := range params {
+					assert.EqualValues(t, test.expectedArgs[i], val)
+				}
 			} else {
 				assert.ErrorContains(t, err, test.errorstr)
 			}
