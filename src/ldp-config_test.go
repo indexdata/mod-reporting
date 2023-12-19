@@ -101,6 +101,7 @@ type testT struct {
 	establishMock func(data interface{}) error
 	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 	expected string
+	expectedArgs []string // Used only in reporting_test.go/Test_makeSql
 	errorstr string
 	useBadSession bool
 }
