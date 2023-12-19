@@ -3,9 +3,40 @@ package main
 import "io"
 import "strings"
 import "testing"
+import "encoding/json"
 import "github.com/stretchr/testify/assert"
 import "github.com/pashagolub/pgxmock/v3"
 import "net/http/httptest"
+
+
+func Test_makeSql(t *testing.T) {
+	t.Run("empty query", func(t *testing.T) {
+		bytes := []byte(`{}`)
+		var jq jsonQuery
+		err := json.Unmarshal(bytes, &jq)
+		assert.Nil(t, err)
+		_, _, err = makeSql(jq)
+		assert.ErrorContains(t, err, "query must have exactly one table")
+	})
+	t.Run("query with empty tables", func(t *testing.T) {
+		bytes := []byte(`{ "tables": [] }`)
+		var jq jsonQuery
+		err := json.Unmarshal(bytes, &jq)
+		assert.Nil(t, err)
+		_, _, err = makeSql(jq)
+		assert.ErrorContains(t, err, "query must have exactly one table")
+	})
+	t.Run("query with empty tables", func(t *testing.T) {
+		bytes := []byte(`{ "tables": [{ "schema": "folio", "tableName": "users" }] }`)
+		var jq jsonQuery
+		err := json.Unmarshal(bytes, &jq)
+		assert.Nil(t, err)
+		sql, params, err := makeSql(jq)
+		assert.Nil(t, err)
+		assert.Equal(t, `SELECT * FROM "folio"."users"`, sql)
+		assert.Equal(t, 0, len(params))
+	})
+}
 
 
 func Test_handleTables(t *testing.T) {
