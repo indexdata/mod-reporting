@@ -98,7 +98,7 @@ func Test_makeSql(t *testing.T) {
 }
 
 
-func Test_handleTables(t *testing.T) {
+func Test_reportingHandlers(t *testing.T) {
 	tests := []testT{
 		{
 			name: "bad DB connection for tables",
