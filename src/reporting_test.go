@@ -225,6 +225,35 @@ func Test_reportingHandlers(t *testing.T) {
 			function: handleQuery,
 			expected: `[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}]`,
 		},
+		{
+			name: "malformed report",
+			path: "/ldp/db/reports",
+			sendData: `xxx`,
+			function: handleReport,
+			errorstr: "deserialize JSON",
+		},
+		{
+			name: "report without URL",
+			path: "/ldp/db/reports",
+			sendData: `{}`,
+			establishMock: func(data interface{}) error {
+				// XXX to do
+				return nil
+			},
+			function: handleReport,
+			errorstr: "unsupported protocol scheme",
+		},
+		{
+			name: "report with 404 URL",
+			path: "/ldp/db/reports",
+			sendData: `{ "url": "http://example.com/x/y/z.sql" }`,
+			establishMock: func(data interface{}) error {
+				// XXX to do
+				return nil
+			},
+			function: handleReport,
+			errorstr: "unsupported protocol scheme", // XXX why don't we get a 404 here?
+		},
 	}
 
 	ts := MakeDummyModSettingsServer()
