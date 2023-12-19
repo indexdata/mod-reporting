@@ -345,6 +345,7 @@ func makeFunctionCall(sql string, params map[string]string, limit int) (string, 
 
 func collectAndFixRows(rows pgx.Rows) ([]map[string]any, error) {
 	records, err := pgx.CollectRows(rows, pgx.RowToMap)
+	// fmt.Printf("rows: %+v\n", rows.FieldDescriptions())
 	if err != nil {
 		return nil, fmt.Errorf("could not collect query result data: %w", err)
 	}
