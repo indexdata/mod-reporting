@@ -274,6 +274,10 @@ func handleReport(w http.ResponseWriter, req *http.Request, session *ModReportin
 		return fmt.Errorf("could not fetch report from %s: %w", query.Url, err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("could not fetch report from %s: %s", query.Url, resp.Status)
+	}
+
 	bytes, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("could not read report: %w", err)
