@@ -86,6 +86,32 @@ func MakeDummyModSettingsServer() *httptest.Server {
 			`))
 		} else if req.URL.Path == "/settings/entries/75c12fcb-ba6c-463f-a5fc-cb0587b7d43c" {
 			// Nothing to do
+		} else if req.URL.Path == "/reports/noheader.sql" {
+			_, _ = w.Write([]byte(`this is a bad report`))
+		} else if req.URL.Path == "/reports/bad.sql" {
+			_, _ = w.Write([]byte(`--metadb:function users\nthis is bad SQL`))
+		} else if req.URL.Path == "/reports/loans.sql" {
+			_, _ = w.Write([]byte(`--metadb:function count_loans
+
+DROP FUNCTION IF EXISTS count_loans;
+
+CREATE FUNCTION count_loans(
+    start_date date DEFAULT '1000-01-01',
+    end_date date DEFAULT '3000-01-01')
+RETURNS TABLE(
+    item_id uuid,
+    loan_count bigint)
+AS $$
+SELECT item_id,
+       count(*) AS loan_count
+    FROM folio_circulation.loan__t
+    WHERE start_date <= loan_date AND loan_date < end_date
+    GROUP BY item_id
+$$
+LANGUAGE SQL
+STABLE
+PARALLEL SAFE;
+`))
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "Not found")
