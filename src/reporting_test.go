@@ -2,6 +2,7 @@ package main
 
 import "io"
 import "strings"
+import "fmt"
 import "testing"
 import "encoding/json"
 import "github.com/stretchr/testify/assert"
@@ -257,22 +258,22 @@ func Test_reportingHandlers(t *testing.T) {
 			function: handleReport,
 			errorstr: "could not extract SQL function name",
 		},
-/*
 		{
 			name: "report that is not valid SQL",
 			path: "/ldp/db/reports",
 			sendData: `{ "url": "` + baseUrl + `/reports/bad.sql" }`,
+			// pgxmock can't spot the badness of the SQL, so we manually cause an error
 			establishMock: func(data interface{}) error {
 				mock := data.(pgxmock.PgxPoolIface)
 				mock.ExpectBegin()
-				mock.ExpectExec("--metadb:function users")
+				mock.ExpectExec("--metadb:function users").
+					WillReturnError(fmt.Errorf("bad SQL"))
 				mock.ExpectRollback()
 				return nil
 			},
 			function: handleReport,
-			errorstr: "Exec must return a result",
+			errorstr: "could not register SQL function: bad SQL",
 		},
-*/
 		{
 			name: "simple report",
 			path: "/ldp/db/reports",
@@ -291,6 +292,29 @@ func Test_reportingHandlers(t *testing.T) {
 			},
 			function: handleReport,
 			expected: `{"totalRecords":2,"records":\[{"id":"123","num":42},{"id":"456","num":96}\]}`,
+		},
+		{
+			name: "report with parameters, limit and UUID",
+			path: "/ldp/db/reports",
+			sendData: `{ "url": "` + baseUrl + `/reports/loans.sql",
+				     "params": { "end_date": "2023-03-18T00:00:00.000Z" },
+				     "limit": 100
+				   }`,
+			establishMock: func(data interface{}) error {
+				mock := data.(pgxmock.PgxPoolIface)
+				mock.ExpectBegin()
+				mock.ExpectExec("--metadb:function count_loans").
+					WillReturnResult(pgxmock.NewResult("CREATE FUNCTION", 1))
+				id := [16]uint8{90, 154, 146, 202, 186, 5, 215, 45, 248, 76, 49, 146, 31, 31, 126, 77}
+				mock.ExpectQuery(`SELECT \* FROM count_loans\(end_date => '2023-03-18T00:00:00.000Z'\)`).
+					WillReturnRows(pgxmock.NewRows([]string{"id", "num"}).
+						AddRow(id, 29).
+						AddRow("456", 3))
+				mock.ExpectRollback()
+				return nil
+			},
+			function: handleReport,
+			expected: `{"totalRecords":2,"records":\[{"id":"5a9a92ca-ba05-d72d-f84c-31921f1f7e4d","num":29},{"id":"456","num":3}\]}`,
 		},
 	}
 
