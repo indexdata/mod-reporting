@@ -99,6 +99,10 @@ func Test_makeSql(t *testing.T) {
 
 
 func Test_reportingHandlers(t *testing.T) {
+	ts := MakeDummyModSettingsServer()
+	defer ts.Close()
+	baseUrl := ts.URL
+
 	tests := []testT{
 		{
 			name: "bad DB connection for tables",
@@ -236,38 +240,64 @@ func Test_reportingHandlers(t *testing.T) {
 			name: "report without URL",
 			path: "/ldp/db/reports",
 			sendData: `{}`,
-			establishMock: func(data interface{}) error {
-				// XXX to do
-				return nil
-			},
 			function: handleReport,
 			errorstr: "unsupported protocol scheme",
 		},
 		{
 			name: "report with 404 URL",
 			path: "/ldp/db/reports",
-			sendData: `{ "url": "http://example.com/x/y/z.sql" }`,
+			sendData: `{ "url": "` + baseUrl + `/x/y/z.sql" }`,
+			function: handleReport,
+			errorstr: "404 Not Found",
+		},
+		{
+			name: "report without function declaration",
+			path: "/ldp/db/reports",
+			sendData: `{ "url": "` + baseUrl + `/reports/noheader.sql" }`,
+			function: handleReport,
+			errorstr: "could not extract SQL function name",
+		},
+/*
+		{
+			name: "report that is not valid SQL",
+			path: "/ldp/db/reports",
+			sendData: `{ "url": "` + baseUrl + `/reports/bad.sql" }`,
 			establishMock: func(data interface{}) error {
-				// XXX to do
+				mock := data.(pgxmock.PgxPoolIface)
+				mock.ExpectBegin()
+				mock.ExpectExec("--metadb:function users")
+				mock.ExpectRollback()
 				return nil
 			},
 			function: handleReport,
-			errorstr: "unsupported protocol scheme", // XXX why don't we get a 404 here?
+			errorstr: "Exec must return a result",
+		},
+*/
+		{
+			name: "simple report",
+			path: "/ldp/db/reports",
+			sendData: `{ "url": "` + baseUrl + `/reports/loans.sql" }`,
+			establishMock: func(data interface{}) error {
+				mock := data.(pgxmock.PgxPoolIface)
+				mock.ExpectBegin()
+				mock.ExpectExec("--metadb:function count_loans").
+					WillReturnResult(pgxmock.NewResult("CREATE FUNCTION", 1))
+				mock.ExpectQuery(`SELECT \* FROM count_loans`).
+					WillReturnRows(pgxmock.NewRows([]string{"id", "num"}).
+						AddRow("123", 42).
+						AddRow("456", 96))
+				mock.ExpectRollback()
+				return nil
+			},
+			function: handleReport,
+			expected: `{"totalRecords":2,"records":\[{"id":"123","num":42},{"id":"456","num":96}\]}`,
 		},
 	}
-
-	ts := MakeDummyModSettingsServer()
-	defer ts.Close()
-	baseUrl := ts.URL
 
 	mrs, err := MakeConfiguredServer("../etc/silent.json", ".")
 	assert.Nil(t, err)
 	session, err := NewModReportingSession(mrs, baseUrl, "dummyTenant")
 	assert.Nil(t, err)
-
-	mock, err := pgxmock.NewPool()
-	assert.Nil(t, err)
-	defer mock.Close()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -278,6 +308,10 @@ func Test_reportingHandlers(t *testing.T) {
 				reader = strings.NewReader(test.sendData)
 			}
 			req := httptest.NewRequest(method, baseUrl + test.path, reader)
+
+			mock, err := pgxmock.NewPool()
+			assert.Nil(t, err)
+			defer mock.Close()
 
 			if test.establishMock != nil {
 				err = test.establishMock(mock)
@@ -299,11 +333,10 @@ func Test_reportingHandlers(t *testing.T) {
 				assert.Equal(t, resp.StatusCode, 200)
 				body, _ := io.ReadAll(resp.Body)
 				assert.Regexp(t, test.expected, string(body))
+				assert.Nil(t, mock.ExpectationsWereMet(), "unfulfilled expections")
 			} else {
 				assert.ErrorContains(t, err, test.errorstr)
 			}
-
-			assert.Nil(t, mock.ExpectationsWereMet(), "unfulfilled expections")
 		})
 	}
 }
