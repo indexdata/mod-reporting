@@ -7,14 +7,12 @@ import "time"
 import "net/http"
 import "io"
 import "regexp"
+import "github.com/stretchr/testify/assert"
 
 
-func TestModReporting(t *testing.T) {
+func Test_server(t *testing.T) {
 	server, err := MakeConfiguredServer("../etc/silent.json", "..")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot create server: %s\n", err)
-		os.Exit(2)
-	}
+	assert.Nil(t, err)
 	go func() {
 		err = server.launch()
 	}()
