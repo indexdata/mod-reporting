@@ -112,6 +112,9 @@ LANGUAGE SQL
 STABLE
 PARALLEL SAFE;
 `))
+		} else if req.URL.Path == "/authn/login-with-expiry" {
+			// Attempted login to create new FOLIO session
+			fmt.Fprintln(w, `{"accessTokenExpiration":"2023-12-22T12:35:47Z"}`)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "Not found")
