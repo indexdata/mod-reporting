@@ -45,19 +45,6 @@ func fetchWithToken(req *http.Request, folioSession foliogo.Session, path string
 	token := req.Header.Get("X-Okapi-Token")
 	if token != "" {
 		params.Token = token
-	} else {
-		fmt.Printf("*** no X-Okapi-Token header in request: not from Okapi")
-		// It must be a session created, so it will handle the cookie we got when we logged in
-		// So there is nothing for us to do here
-		/*
-		for _, cookie := range req.Cookies() {
-			if cookie.Name == "folioAccessToken" {
-				token = cookie.Value
-				break
-			}
-		}
-		fmt.Printf("token from cookie is %s\n", token)
-		*/
 	}
 
 	return folioSession.Fetch(path, params)
@@ -223,7 +210,6 @@ func writeConfigKey(w http.ResponseWriter, req *http.Request, session *ModReport
 		"key": key,
 		"value": item.Value,
 	}
-	fmt.Printf("simpleSettingsItem = %+v\n", simpleSettingsItem)
 	_, err = fetchWithToken(req, session.folioSession, path, foliogo.RequestParams{
 		Method: method,
 		Json: simpleSettingsItem,

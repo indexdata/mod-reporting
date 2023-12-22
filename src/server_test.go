@@ -1,19 +1,19 @@
 package main
 
 import "testing"
-import "fmt"
 import "os"
+import "strings"
+import "io"
+import "fmt"
 import "time"
 import "net/http"
-import "io"
 import "regexp"
+import "github.com/stretchr/testify/assert"
 
-func TestModReporting(t *testing.T) {
-	server, err := MakeConfiguredServer("../etc/config.json", "..")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot create server: %s\n", err)
-		os.Exit(2)
-	}
+
+func Test_server(t *testing.T) {
+	server, err := MakeConfiguredServer("../etc/silent.json", "..")
+	assert.Nil(t, err)
 	go func() {
 		err = server.launch()
 	}()
@@ -27,6 +27,7 @@ func TestModReporting(t *testing.T) {
 	}
 }
 
+
 func runTests(t *testing.T, client http.Client) {
 	data := []struct {
 		name   string
@@ -38,13 +39,29 @@ func runTests(t *testing.T, client http.Client) {
 		{"health check", "admin/health", 200, "Behold!"},
 		{"short bad path", "foo", 404, ""},
 		{"long bad path", "foo/bar/baz", 404, ""},
+		{"get all config", "ldp/config", 200, `\[{"key":"config","tenant":"","value":"v1"}\]`},
+		{"get single config", "ldp/config/dbinfo", 200, `{"key":"dbinfo","tenant":"","value":"{\\"pass\\":\\"pw\\",\\"url\\":\\"dummyUrl\\",\\"user\\":\\"fiona\\"}"}`},
 		// XXX more cases to come here
 	}
 
+	ts := MakeDummyModSettingsServer()
+	defer ts.Close()
+	baseUrl := ts.URL
+
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
+			var bodyReader io.Reader
+			sendBody := "" // for now
+			if sendBody != "" {
+				bodyReader = strings.NewReader(sendBody)
+			}
+
 			url := "http://localhost:12369/" + d.path
-			resp, err := client.Get(url)
+			req, err := http.NewRequest("GET", url, bodyReader)
+			assert.Nil(t, err)
+			req.Header.Add("X-Okapi-URL", baseUrl)
+
+			resp, err := client.Do(req)
 			if err != nil {
 				t.Errorf("cannot fetch %s: %v", url, err)
 				return

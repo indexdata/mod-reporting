@@ -8,7 +8,6 @@ import "regexp"
 import "net/http"
 import "encoding/json"
 import "github.com/jackc/pgx/v5"
-import "github.com/jackc/pgx/v5/pgxpool"
 
 
 type dbTable struct {
@@ -39,7 +38,7 @@ func handleTables(w http.ResponseWriter, req *http.Request, session *ModReportin
 }
 
 
-func fetchTables(dbConn *pgxpool.Pool) ([]dbTable, error) {
+func fetchTables(dbConn PgxIface) ([]dbTable, error) {
 	query := "SELECT schema_name, table_name FROM metadb.base_table"
 	rows, err := dbConn.Query(context.Background(), query)
 	if err != nil {
@@ -72,16 +71,22 @@ func handleColumns(w http.ResponseWriter, req *http.Request, session *ModReporti
 }
 
 
-func fetchColumns(dbConn *pgxpool.Pool, schema string, table string) ([]dbColumn, error) {
+func fetchColumns(dbConn PgxIface, schema string, table string) ([]dbColumn, error) {
 	// This seems to work for both MetaDB and LDP Classic
 	cols := "column_name, data_type, ordinal_position, table_schema, table_name"
 	query := "SELECT " + cols + " FROM information_schema.columns " +
-		"WHERE table_schema = $1 AND table_name = $2 AND column_name != $3";
+		"WHERE table_schema = $1 AND table_name = $2 AND column_name != $3"
 	rows, err := dbConn.Query(context.Background(), query, schema, table, "data")
 	if err != nil {
 		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
 	}
 	defer rows.Close()
+	/*
+	for rows.Next() {
+		val, _ := rows.Values()
+		fmt.Printf("column 3: %T, %+v\n", val[2], val[2])
+	}
+	*/
 
 	return pgx.CollectRows(rows, pgx.RowToStructByName[dbColumn])
 }
@@ -269,6 +274,10 @@ func handleReport(w http.ResponseWriter, req *http.Request, session *ModReportin
 		return fmt.Errorf("could not fetch report from %s: %w", query.Url, err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("could not fetch report from %s: %s", query.Url, resp.Status)
+	}
+
 	bytes, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("could not read report: %w", err)
@@ -340,6 +349,7 @@ func makeFunctionCall(sql string, params map[string]string, limit int) (string, 
 
 func collectAndFixRows(rows pgx.Rows) ([]map[string]any, error) {
 	records, err := pgx.CollectRows(rows, pgx.RowToMap)
+	// fmt.Printf("rows: %+v\n", rows.FieldDescriptions())
 	if err != nil {
 		return nil, fmt.Errorf("could not collect query result data: %w", err)
 	}

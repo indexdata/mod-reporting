@@ -1,0 +1,38 @@
+package main
+
+import "os"
+import "testing"
+import "github.com/stretchr/testify/assert"
+
+
+func Test_getDbInfo(t *testing.T) {
+	ts := MakeDummyModSettingsServer()
+	defer ts.Close()
+	baseUrl := ts.URL
+
+	session, err := NewModReportingSession(nil, baseUrl, "dummyTenant")
+	assert.Nil(t, err)
+
+	t.Run("info from environment", func(t *testing.T) {
+		url := "http://metadb.example.com:12345/db"
+		os.Setenv("REPORTING_DB_URL", url)
+		os.Setenv("REPORTING_DB_USER", "mike")
+		os.Setenv("REPORTING_DB_PASS", "swordfish")
+		dburl, dbuser, dbpass, err := getDbInfo(session.folioSession)
+		assert.Nil(t, err)
+		assert.Equal(t, url, dburl)
+		assert.Equal(t, dbuser, "mike")
+		assert.Equal(t, dbpass, "swordfish")
+	})
+
+	t.Run("info from FOLIO", func(t *testing.T) {
+		os.Setenv("REPORTING_DB_URL", "")
+		os.Setenv("REPORTING_DB_USER", "")
+		os.Setenv("REPORTING_DB_PASS", "")
+		dburl, dbuser, dbpass, err := getDbInfo(session.folioSession)
+		assert.Nil(t, err)
+		assert.Equal(t, "dummyUrl", dburl)
+		assert.Equal(t, dbuser, "fiona")
+		assert.Equal(t, dbpass, "pw")
+	})
+}
