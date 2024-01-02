@@ -226,7 +226,7 @@ func Test_handleConfig(t *testing.T) {
 
 			if test.errorstr == "" {
 				assert.Nil(t, err)
-				assert.Equal(t, resp.StatusCode, 200)
+				assert.Equal(t, 200, resp.StatusCode)
 				body, _ := io.ReadAll(resp.Body)
 				assert.Regexp(t, test.expected, string(body))
 			} else {

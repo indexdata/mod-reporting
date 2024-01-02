@@ -21,8 +21,8 @@ func Test_getDbInfo(t *testing.T) {
 		dburl, dbuser, dbpass, err := getDbInfo(session.folioSession)
 		assert.Nil(t, err)
 		assert.Equal(t, url, dburl)
-		assert.Equal(t, dbuser, "mike")
-		assert.Equal(t, dbpass, "swordfish")
+		assert.Equal(t, "mike", dbuser)
+		assert.Equal(t, "swordfish", dbpass)
 	})
 
 	t.Run("info from FOLIO", func(t *testing.T) {
@@ -32,7 +32,7 @@ func Test_getDbInfo(t *testing.T) {
 		dburl, dbuser, dbpass, err := getDbInfo(session.folioSession)
 		assert.Nil(t, err)
 		assert.Equal(t, "dummyUrl", dburl)
-		assert.Equal(t, dbuser, "fiona")
-		assert.Equal(t, dbpass, "pw")
+		assert.Equal(t, "fiona", dbuser)
+		assert.Equal(t, "pw", dbpass)
 	})
 }

@@ -354,7 +354,7 @@ func Test_reportingHandlers(t *testing.T) {
 
 			if test.errorstr == "" {
 				assert.Nil(t, err)
-				assert.Equal(t, resp.StatusCode, 200)
+				assert.Equal(t, 200, resp.StatusCode)
 				body, _ := io.ReadAll(resp.Body)
 				assert.Regexp(t, test.expected, string(body))
 				assert.Nil(t, mock.ExpectationsWereMet(), "unfulfilled expections")
