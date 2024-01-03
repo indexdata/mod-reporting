@@ -31,17 +31,19 @@ func Test_server(t *testing.T) {
 func runTests(t *testing.T, client http.Client) {
 	data := []struct {
 		name   string
+		sendData string
 		path   string
 		status int
 		re     string
 	}{
-		{"home", "", 200, "This is .*mod-reporting"},
-		{"health check", "admin/health", 200, "Behold!"},
-		{"short bad path", "foo", 404, ""},
-		{"long bad path", "foo/bar/baz", 404, ""},
-		{"get all config", "ldp/config", 200, `\[{"key":"config","tenant":"","value":"v1"}\]`},
-		{"get single config", "ldp/config/dbinfo", 200, `{"key":"dbinfo","tenant":"","value":"{\\"pass\\":\\"pw\\",\\"url\\":\\"dummyUrl\\",\\"user\\":\\"fiona\\"}"}`},
-		// XXX more cases to come here
+		{"home", "", "", 200, "This is .*mod-reporting"},
+		{"health check", "", "admin/health", 200, "Behold!"},
+		{"short bad path", "", "foo", 404, ""},
+		{"long bad path", "", "foo/bar/baz", 404, ""},
+		{"get all config", "", "ldp/config", 200, `\[{"key":"config","tenant":"","value":"v1"}\]`},
+		{"get single config", "", "ldp/config/dbinfo", 200, `{"key":"dbinfo","tenant":"","value":"{\\"pass\\":\\"pw\\",\\"url\\":\\"dummyUrl\\",\\"user\\":\\"fiona\\"}"}`},
+		{"create new config", `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`, "ldp/config/foo", 200, "abc123" },
+		{"rewrite existing config", `{"key":"dbinfo","tenant":"xxx","value":"{\"user\":\"abc456\"}"}`, "ldp/config/dbinfo", 200, "abc456" },
 	}
 
 	ts := MakeDummyModSettingsServer()
@@ -50,14 +52,15 @@ func runTests(t *testing.T, client http.Client) {
 
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
+			method := "GET"
 			var bodyReader io.Reader
-			sendBody := "" // for now
-			if sendBody != "" {
-				bodyReader = strings.NewReader(sendBody)
+			if d.sendData != "" {
+				method = "PUT"
+				bodyReader = strings.NewReader(d.sendData)
 			}
 
 			url := "http://localhost:12369/" + d.path
-			req, err := http.NewRequest("GET", url, bodyReader)
+			req, err := http.NewRequest(method, url, bodyReader)
 			assert.Nil(t, err)
 			req.Header.Add("X-Okapi-URL", baseUrl)
 
