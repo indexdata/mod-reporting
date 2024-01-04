@@ -209,12 +209,7 @@ func Test_reportingHandlers(t *testing.T) {
 			path: "/ldp/db/query",
 			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users" }] }`,
 			establishMock: func(data interface{}) error {
-				mock := data.(pgxmock.PgxPoolIface)
-				mock.ExpectQuery(`SELECT \* FROM "folio"."users"`).
-					WillReturnRows(pgxmock.NewRows([]string{"name", "email"}).
-						AddRow("mike", "mike@example.com").
-						AddRow("fiona", "fiona@example.com"))
-				return nil
+				return establishMockForQuery(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleQuery,
 			expected: `[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}]`,

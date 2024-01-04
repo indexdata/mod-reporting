@@ -153,3 +153,11 @@ func establishMockForColumns(mock pgxmock.PgxPoolIface) error {
 			AddRow("creation_date", "timestamp without time zone", "8", "folio_users", "users"))
 	return nil
 }
+
+func establishMockForQuery(mock pgxmock.PgxPoolIface) error {
+	mock.ExpectQuery(`SELECT \* FROM "folio"."users"`).
+		WillReturnRows(pgxmock.NewRows([]string{"name", "email"}).
+			AddRow("mike", "mike@example.com").
+			AddRow("fiona", "fiona@example.com"))
+	return nil
+}

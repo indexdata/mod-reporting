@@ -86,7 +86,7 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 		},
 		{
 			name: "fetch tables",
-			path: "/ldp/db/tables",
+			path: "ldp/db/tables",
 			establishMock: func(data interface{}) error {
 				return establishMockForTables(data.(pgxmock.PgxPoolIface))
 			},
@@ -95,12 +95,22 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 		},
 		{
 			name: "fetch columns",
-			path: "/ldp/db/columns?schema=folio_users&table=users",
+			path: "ldp/db/columns?schema=folio_users&table=users",
 			establishMock: func(data interface{}) error {
 				return establishMockForColumns(data.(pgxmock.PgxPoolIface))
 			},
 			status: 200,
 			expected: `{"columnName":"id","data_type":"uuid","tableSchema":"folio_users","tableName":"users","ordinalPosition":"6"},{"columnName":"creation_date","data_type":"timestamp without time zone","tableSchema":"folio_users","tableName":"users","ordinalPosition":"8"}]`,
+		},
+		{
+			name: "reporting query",
+			path: "ldp/db/query",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users" }] }`,
+			establishMock: func(data interface{}) error {
+				return establishMockForQuery(data.(pgxmock.PgxPoolIface))
+			},
+			status: 200,
+			expected: `\[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}\]`,
 		},
 	}
 
@@ -110,6 +120,8 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 			var bodyReader io.Reader
 			if d.sendData != "" {
 				method = "PUT"
+				// Method determination is a bit of a hack
+				if strings.HasPrefix(d.path, "ldp/db/") { method = "POST" }
 				bodyReader = strings.NewReader(d.sendData)
 			}
 
