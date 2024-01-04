@@ -12,6 +12,7 @@ type testT struct {
 	path string
 	sendData string
 	establishMock func(data interface{}) error
+	status int // Used only in server_test.go
 	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 	expected string
 	expectedArgs []string // Used only in reporting_test.go/Test_makeSql
