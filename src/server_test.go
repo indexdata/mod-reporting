@@ -8,6 +8,7 @@ import "fmt"
 import "time"
 import "net/http"
 import "regexp"
+import "github.com/pashagolub/pgxmock/v3"
 import "github.com/stretchr/testify/assert"
 
 
@@ -34,7 +35,7 @@ func runTests(t *testing.T, client http.Client) {
 		sendData string
 		path   string
 		status int
-		re     string
+		expected     string
 	}{
 		{"home", "", "", 200, "This is .*mod-reporting"},
 		{"health check", "", "admin/health", 200, "Behold!"},
@@ -79,13 +80,13 @@ func runTests(t *testing.T, client http.Client) {
 				t.Errorf("cannot read body %s: %v", url, err)
 				return
 			}
-			matched, err := regexp.Match(d.re, body)
+			matched, err := regexp.Match(d.expected, body)
 			if err != nil {
-				t.Errorf("cannot match body of %s against regexp /%s/: %v", url, d.re, err)
+				t.Errorf("cannot match body of %s against regexp /%s/: %v", url, d.expected, err)
 				return
 			}
 			if !matched {
-				t.Errorf("body of %s does not match regexp /%s/: body = %s", url, d.re, body)
+				t.Errorf("body of %s does not match regexp /%s/: body = %s", url, d.expected, body)
 			}
 		})
 	}
