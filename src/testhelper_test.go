@@ -6,6 +6,20 @@ import "net/http/httptest"
 import "github.com/pashagolub/pgxmock/v3"
 
 
+// Various parts of this structure are used by different files' tests
+type testT struct {
+	name string
+	path string
+	sendData string
+	establishMock func(data interface{}) error
+	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
+	expected string
+	expectedArgs []string // Used only in reporting_test.go/Test_makeSql
+	errorstr string
+	useBadSession bool
+}
+
+
 // Dummy HTTP server used by multiple tests
 func MakeDummyModSettingsServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -118,20 +132,6 @@ PARALLEL SAFE;
 			fmt.Fprintln(w, "Not found")
 		}
 	}))
-}
-
-
-// Various parts of this structure are used by different files' tests
-type testT struct {
-	name string
-	path string
-	sendData string
-	establishMock func(data interface{}) error
-	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
-	expected string
-	expectedArgs []string // Used only in reporting_test.go/Test_makeSql
-	errorstr string
-	useBadSession bool
 }
 
 
