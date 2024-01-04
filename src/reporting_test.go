@@ -285,17 +285,7 @@ func Test_reportingHandlers(t *testing.T) {
 				     "limit": 100
 				   }`,
 			establishMock: func(data interface{}) error {
-				mock := data.(pgxmock.PgxPoolIface)
-				mock.ExpectBegin()
-				mock.ExpectExec("--metadb:function count_loans").
-					WillReturnResult(pgxmock.NewResult("CREATE FUNCTION", 1))
-				id := [16]uint8{90, 154, 146, 202, 186, 5, 215, 45, 248, 76, 49, 146, 31, 31, 126, 77}
-				mock.ExpectQuery(`SELECT \* FROM count_loans\(end_date => '2023-03-18T00:00:00.000Z'\)`).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "num"}).
-						AddRow(id, 29).
-						AddRow("456", 3))
-				mock.ExpectRollback()
-				return nil
+				return establishMockForReport(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleReport,
 			expected: `{"totalRecords":2,"records":\[{"id":"5a9a92ca-ba05-d72d-f84c-31921f1f7e4d","num":29},{"id":"456","num":3}\]}`,

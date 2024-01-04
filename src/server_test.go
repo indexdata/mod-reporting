@@ -112,6 +112,19 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 			status: 200,
 			expected: `\[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}\]`,
 		},
+		{
+			name: "report with parameters",
+			path: "ldp/db/reports",
+			sendData: `{ "url": "` + baseUrl + `/reports/loans.sql",
+				     "params": { "end_date": "2023-03-18T00:00:00.000Z" },
+				     "limit": 100
+				   }`,
+			establishMock: func(data interface{}) error {
+				return establishMockForReport(data.(pgxmock.PgxPoolIface))
+			},
+			status: 200,
+			expected: `{"totalRecords":2,"records":\[{"id":"5a9a92ca-ba05-d72d-f84c-31921f1f7e4d","num":29},{"id":"456","num":3}\]}`,
+		},
 	}
 
 	for _, d := range data {

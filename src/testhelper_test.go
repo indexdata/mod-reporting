@@ -161,3 +161,16 @@ func establishMockForQuery(mock pgxmock.PgxPoolIface) error {
 			AddRow("fiona", "fiona@example.com"))
 	return nil
 }
+
+func establishMockForReport(mock pgxmock.PgxPoolIface) error {
+	mock.ExpectBegin()
+	mock.ExpectExec("--metadb:function count_loans").
+		WillReturnResult(pgxmock.NewResult("CREATE FUNCTION", 1))
+	id := [16]uint8{90, 154, 146, 202, 186, 5, 215, 45, 248, 76, 49, 146, 31, 31, 126, 77}
+	mock.ExpectQuery(`SELECT \* FROM count_loans\(end_date => '2023-03-18T00:00:00.000Z'\)`).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "num"}).
+			AddRow(id, 29).
+			AddRow("456", 3))
+	mock.ExpectRollback()
+	return nil
+}
