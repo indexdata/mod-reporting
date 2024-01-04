@@ -122,12 +122,7 @@ func Test_reportingHandlers(t *testing.T) {
 			name: "retrieve list of tables",
 			path: "/ldp/db/tables",
 			establishMock: func(data interface{}) error {
-				mock := data.(pgxmock.PgxPoolIface)
-				mock.ExpectQuery("SELECT schema_name, table_name FROM metadb.base_table").WillReturnRows(
-					pgxmock.NewRows([]string{"schema_name", "table_name"}).
-						AddRow("folio_inventory", "records_instances").
-						AddRow("folio_inventory", "holdings_record"))
-				return nil
+				return establishMockForTables(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleTables,
 			expected: `[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}]`,
@@ -148,13 +143,7 @@ func Test_reportingHandlers(t *testing.T) {
 			name: "retrieve list of columns",
 			path: "/ldp/db/columns?schema=folio_users&table=users",
 			establishMock: func(data interface{}) error {
-				mock := data.(pgxmock.PgxPoolIface)
-				mock.ExpectQuery(`SELECT`).
-					WithArgs("folio_users", "users", "data").
-					WillReturnRows(pgxmock.NewRows([]string{"column_name", "data_type", "ordinal_position", "table_schema", "table_name"}).
-						AddRow("id", "uuid", "6", "folio_users", "users").
-						AddRow("creation_date", "timestamp without time zone", "8", "folio_users", "users"))
-				return nil
+				return establishMockForColumns(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleColumns,
 			expected: `{"columnName":"id","data_type":"uuid","tableSchema":"folio_users","tableName":"users","ordinalPosition":"6"},{"columnName":"creation_date","data_type":"timestamp without time zone","tableSchema":"folio_users","tableName":"users","ordinalPosition":"8"}]`,
@@ -220,12 +209,7 @@ func Test_reportingHandlers(t *testing.T) {
 			path: "/ldp/db/query",
 			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users" }] }`,
 			establishMock: func(data interface{}) error {
-				mock := data.(pgxmock.PgxPoolIface)
-				mock.ExpectQuery(`SELECT \* FROM "folio"."users"`).
-					WillReturnRows(pgxmock.NewRows([]string{"name", "email"}).
-						AddRow("mike", "mike@example.com").
-						AddRow("fiona", "fiona@example.com"))
-				return nil
+				return establishMockForQuery(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleQuery,
 			expected: `[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}]`,
@@ -301,17 +285,7 @@ func Test_reportingHandlers(t *testing.T) {
 				     "limit": 100
 				   }`,
 			establishMock: func(data interface{}) error {
-				mock := data.(pgxmock.PgxPoolIface)
-				mock.ExpectBegin()
-				mock.ExpectExec("--metadb:function count_loans").
-					WillReturnResult(pgxmock.NewResult("CREATE FUNCTION", 1))
-				id := [16]uint8{90, 154, 146, 202, 186, 5, 215, 45, 248, 76, 49, 146, 31, 31, 126, 77}
-				mock.ExpectQuery(`SELECT \* FROM count_loans\(end_date => '2023-03-18T00:00:00.000Z'\)`).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "num"}).
-						AddRow(id, 29).
-						AddRow("456", 3))
-				mock.ExpectRollback()
-				return nil
+				return establishMockForReport(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleReport,
 			expected: `{"totalRecords":2,"records":\[{"id":"5a9a92ca-ba05-d72d-f84c-31921f1f7e4d","num":29},{"id":"456","num":3}\]}`,

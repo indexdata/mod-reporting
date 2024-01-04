@@ -3,6 +3,22 @@ package main
 import "fmt"
 import "net/http"
 import "net/http/httptest"
+import "github.com/pashagolub/pgxmock/v3"
+
+
+// Various parts of this structure are used by different files' tests
+type testT struct {
+	name string
+	path string
+	sendData string
+	establishMock func(data interface{}) error
+	status int // Used only in server_test.go
+	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
+	expected string
+	expectedArgs []string // Used only in reporting_test.go/Test_makeSql
+	errorstr string
+	useBadSession bool
+}
 
 
 // Dummy HTTP server used by multiple tests
@@ -120,15 +136,41 @@ PARALLEL SAFE;
 }
 
 
-// Various parts of this structure are used by different files' tests
-type testT struct {
-	name string
-	path string
-	sendData string
-	establishMock func(data interface{}) error
-	function func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
-	expected string
-	expectedArgs []string // Used only in reporting_test.go/Test_makeSql
-	errorstr string
-	useBadSession bool
+// Functions to establish pgxmock expectations, used by multiple tests
+func establishMockForTables(mock pgxmock.PgxPoolIface) error {
+	mock.ExpectQuery("SELECT schema_name, table_name FROM metadb.base_table").WillReturnRows(
+		pgxmock.NewRows([]string{"schema_name", "table_name"}).
+			AddRow("folio_inventory", "records_instances").
+			AddRow("folio_inventory", "holdings_record"))
+	return nil
+}
+
+func establishMockForColumns(mock pgxmock.PgxPoolIface) error {
+	mock.ExpectQuery(`SELECT`).
+		WithArgs("folio_users", "users", "data").
+		WillReturnRows(pgxmock.NewRows([]string{"column_name", "data_type", "ordinal_position", "table_schema", "table_name"}).
+			AddRow("id", "uuid", "6", "folio_users", "users").
+			AddRow("creation_date", "timestamp without time zone", "8", "folio_users", "users"))
+	return nil
+}
+
+func establishMockForQuery(mock pgxmock.PgxPoolIface) error {
+	mock.ExpectQuery(`SELECT \* FROM "folio"."users"`).
+		WillReturnRows(pgxmock.NewRows([]string{"name", "email"}).
+			AddRow("mike", "mike@example.com").
+			AddRow("fiona", "fiona@example.com"))
+	return nil
+}
+
+func establishMockForReport(mock pgxmock.PgxPoolIface) error {
+	mock.ExpectBegin()
+	mock.ExpectExec("--metadb:function count_loans").
+		WillReturnResult(pgxmock.NewResult("CREATE FUNCTION", 1))
+	id := [16]uint8{90, 154, 146, 202, 186, 5, 215, 45, 248, 76, 49, 146, 31, 31, 126, 77}
+	mock.ExpectQuery(`SELECT \* FROM count_loans\(end_date => '2023-03-18T00:00:00.000Z'\)`).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "num"}).
+			AddRow(id, 29).
+			AddRow("456", 3))
+	mock.ExpectRollback()
+	return nil
 }
