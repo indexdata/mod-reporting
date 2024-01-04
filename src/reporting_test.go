@@ -122,12 +122,7 @@ func Test_reportingHandlers(t *testing.T) {
 			name: "retrieve list of tables",
 			path: "/ldp/db/tables",
 			establishMock: func(data interface{}) error {
-				mock := data.(pgxmock.PgxPoolIface)
-				mock.ExpectQuery("SELECT schema_name, table_name FROM metadb.base_table").WillReturnRows(
-					pgxmock.NewRows([]string{"schema_name", "table_name"}).
-						AddRow("folio_inventory", "records_instances").
-						AddRow("folio_inventory", "holdings_record"))
-				return nil
+				return establishMockForTables(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleTables,
 			expected: `[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}]`,

@@ -3,6 +3,7 @@ package main
 import "fmt"
 import "net/http"
 import "net/http/httptest"
+import "github.com/pashagolub/pgxmock/v3"
 
 
 // Dummy HTTP server used by multiple tests
@@ -131,4 +132,14 @@ type testT struct {
 	expectedArgs []string // Used only in reporting_test.go/Test_makeSql
 	errorstr string
 	useBadSession bool
+}
+
+
+// Functions to establish pgxmock expectations, used by multiple tests
+func establishMockForTables(mock pgxmock.PgxPoolIface) error {
+	mock.ExpectQuery("SELECT schema_name, table_name FROM metadb.base_table").WillReturnRows(
+		pgxmock.NewRows([]string{"schema_name", "table_name"}).
+			AddRow("folio_inventory", "records_instances").
+			AddRow("folio_inventory", "holdings_record"))
+	return nil
 }
