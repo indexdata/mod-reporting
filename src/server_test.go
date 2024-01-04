@@ -43,15 +43,69 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 		status int
 		expected     string
 	}{
-		{"home", "", "", 200, "This is .*mod-reporting"},
-		{"health check", "", "admin/health", 200, "Behold!"},
-		{"short bad path", "", "foo", 404, ""},
-		{"long bad path", "", "foo/bar/baz", 404, ""},
-		{"get all config", "", "ldp/config", 200, `\[{"key":"config","tenant":"t1","value":"v1"}\]`},
-		{"get single config", "", "ldp/config/dbinfo", 200, `{"key":"dbinfo","tenant":"t1","value":"{\\"pass\\":\\"pw\\",\\"url\\":\\"dummyUrl\\",\\"user\\":\\"fiona\\"}"}`},
-		{"create new config", `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`, "ldp/config/foo", 200, "abc123" },
-		{"rewrite existing config", `{"key":"dbinfo","tenant":"xxx","value":"{\"user\":\"abc456\"}"}`, "ldp/config/dbinfo", 200, "abc456" },
-		{"fetch tables", "", "/ldp/db/tables", 200, `\[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}\]`},
+		{
+			name: "home",
+			sendData: "",
+			path: "",
+			status: 200,
+			expected: "This is .*mod-reporting",
+		},
+		{
+			name: "health check",
+			sendData: "",
+			path: "admin/health",
+			status: 200,
+			expected: "Behold!",
+		},
+		{
+			name: "short bad path",
+			sendData: "",
+			path: "foo",
+			status: 404,
+			expected: "",
+		},
+		{
+			name: "long bad path",
+			sendData: "",
+			path: "foo/bar/baz",
+			status: 404,
+			expected: "",
+		},
+		{
+			name: "get all config",
+			sendData: "",
+			path: "ldp/config",
+			status: 200,
+			expected: `\[{"key":"config","tenant":"t1","value":"v1"}\]`,
+		},
+		{
+			name: "get single config",
+			sendData: "",
+			path: "ldp/config/dbinfo",
+			status: 200,
+			expected: `{"key":"dbinfo","tenant":"t1","value":"{\\"pass\\":\\"pw\\",\\"url\\":\\"dummyUrl\\",\\"user\\":\\"fiona\\"}"}`,
+		},
+		{
+			name: "create new config",
+			sendData: `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`,
+			path: "ldp/config/foo",
+			status: 200,
+			expected: "abc123",
+		},
+		{
+			name: "rewrite existing config",
+			sendData: `{"key":"dbinfo","tenant":"xxx","value":"{\"user\":\"abc456\"}"}`,
+			path: "ldp/config/dbinfo",
+			status: 200,
+			expected: "abc456" ,
+		},
+		{
+			name: "fetch tables",
+			sendData: "",
+			path: "/ldp/db/tables",
+			status: 200,
+			expected: `\[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}\]`,
+		},
 	}
 
 	client := http.Client{}
