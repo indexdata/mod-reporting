@@ -39,42 +39,33 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 	data := []testT{
 		{
 			name: "home",
-			sendData: "",
-			path: "",
 			status: 200,
 			expected: "This is .*mod-reporting",
 		},
 		{
 			name: "health check",
-			sendData: "",
 			path: "admin/health",
 			status: 200,
 			expected: "Behold!",
 		},
 		{
 			name: "short bad path",
-			sendData: "",
 			path: "foo",
 			status: 404,
-			expected: "",
 		},
 		{
 			name: "long bad path",
-			sendData: "",
 			path: "foo/bar/baz",
 			status: 404,
-			expected: "",
 		},
 		{
 			name: "get all config",
-			sendData: "",
 			path: "ldp/config",
 			status: 200,
 			expected: `\[{"key":"config","tenant":"t1","value":"v1"}\]`,
 		},
 		{
 			name: "get single config",
-			sendData: "",
 			path: "ldp/config/dbinfo",
 			status: 200,
 			expected: `{"key":"dbinfo","tenant":"t1","value":"{\\"pass\\":\\"pw\\",\\"url\\":\\"dummyUrl\\",\\"user\\":\\"fiona\\"}"}`,
@@ -95,7 +86,6 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 		},
 		{
 			name: "fetch tables",
-			sendData: "",
 			path: "/ldp/db/tables",
 			status: 200,
 			expected: `\[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}\]`,
