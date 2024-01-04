@@ -13,15 +13,21 @@ import "github.com/stretchr/testify/assert"
 
 
 func Test_server(t *testing.T) {
+	ts := MakeDummyModSettingsServer()
+	defer ts.Close()
 	server, err := MakeConfiguredServer("../etc/silent.json", "..")
 	assert.Nil(t, err)
+	session, err := NewModReportingSession(server, ts.URL, "t1")
+	assert.Nil(t, err)
+	server.sessions[":" + ts.URL] = session
+
 	go func() {
 		err = server.launch()
 	}()
 
 	// Allow half a second for the server to start. This is ugly
 	time.Sleep(time.Second / 2)
-	runTests(t, http.Client{})
+	runTests(t, ts.URL, session)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot launch server: %s\n", err)
 		os.Exit(3)
@@ -29,7 +35,7 @@ func Test_server(t *testing.T) {
 }
 
 
-func runTests(t *testing.T, client http.Client) {
+func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 	data := []struct {
 		name   string
 		sendData string
@@ -41,15 +47,19 @@ func runTests(t *testing.T, client http.Client) {
 		{"health check", "", "admin/health", 200, "Behold!"},
 		{"short bad path", "", "foo", 404, ""},
 		{"long bad path", "", "foo/bar/baz", 404, ""},
-		{"get all config", "", "ldp/config", 200, `\[{"key":"config","tenant":"","value":"v1"}\]`},
-		{"get single config", "", "ldp/config/dbinfo", 200, `{"key":"dbinfo","tenant":"","value":"{\\"pass\\":\\"pw\\",\\"url\\":\\"dummyUrl\\",\\"user\\":\\"fiona\\"}"}`},
+		{"get all config", "", "ldp/config", 200, `\[{"key":"config","tenant":"t1","value":"v1"}\]`},
+		{"get single config", "", "ldp/config/dbinfo", 200, `{"key":"dbinfo","tenant":"t1","value":"{\\"pass\\":\\"pw\\",\\"url\\":\\"dummyUrl\\",\\"user\\":\\"fiona\\"}"}`},
 		{"create new config", `{"key":"foo","tenant":"xxx","value":"{\"user\":\"abc123\"}"}`, "ldp/config/foo", 200, "abc123" },
 		{"rewrite existing config", `{"key":"dbinfo","tenant":"xxx","value":"{\"user\":\"abc456\"}"}`, "ldp/config/dbinfo", 200, "abc456" },
+		{"fetch tables", "", "/ldp/db/tables", 200, `\[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}\]`},
 	}
 
-	ts := MakeDummyModSettingsServer()
-	defer ts.Close()
-	baseUrl := ts.URL
+	client := http.Client{}
+
+	// XXX should do this per request and check errors
+	mock, _ := pgxmock.NewPool()
+	_ = establishMockForTables(mock)
+	session.dbConn = mock
 
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
