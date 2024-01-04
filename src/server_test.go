@@ -93,6 +93,15 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 			status: 200,
 			expected: `\[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}\]`,
 		},
+		{
+			name: "fetch columns",
+			path: "/ldp/db/columns?schema=folio_users&table=users",
+			establishMock: func(data interface{}) error {
+				return establishMockForColumns(data.(pgxmock.PgxPoolIface))
+			},
+			status: 200,
+			expected: `{"columnName":"id","data_type":"uuid","tableSchema":"folio_users","tableName":"users","ordinalPosition":"6"},{"columnName":"creation_date","data_type":"timestamp without time zone","tableSchema":"folio_users","tableName":"users","ordinalPosition":"8"}]`,
+		},
 	}
 
 	for _, d := range data {

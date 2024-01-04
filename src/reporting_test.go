@@ -143,13 +143,7 @@ func Test_reportingHandlers(t *testing.T) {
 			name: "retrieve list of columns",
 			path: "/ldp/db/columns?schema=folio_users&table=users",
 			establishMock: func(data interface{}) error {
-				mock := data.(pgxmock.PgxPoolIface)
-				mock.ExpectQuery(`SELECT`).
-					WithArgs("folio_users", "users", "data").
-					WillReturnRows(pgxmock.NewRows([]string{"column_name", "data_type", "ordinal_position", "table_schema", "table_name"}).
-						AddRow("id", "uuid", "6", "folio_users", "users").
-						AddRow("creation_date", "timestamp without time zone", "8", "folio_users", "users"))
-				return nil
+				return establishMockForColumns(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleColumns,
 			expected: `{"columnName":"id","data_type":"uuid","tableSchema":"folio_users","tableName":"users","ordinalPosition":"6"},{"columnName":"creation_date","data_type":"timestamp without time zone","tableSchema":"folio_users","tableName":"users","ordinalPosition":"8"}]`,
