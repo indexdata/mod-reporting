@@ -87,17 +87,13 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 		{
 			name: "fetch tables",
 			path: "/ldp/db/tables",
+			establishMock: func(data interface{}) error {
+				return establishMockForTables(data.(pgxmock.PgxPoolIface))
+			},
 			status: 200,
 			expected: `\[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}\]`,
 		},
 	}
-
-	client := http.Client{}
-
-	// XXX should do this per request and check errors
-	mock, _ := pgxmock.NewPool()
-	_ = establishMockForTables(mock)
-	session.dbConn = mock
 
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -113,6 +109,14 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 			assert.Nil(t, err)
 			req.Header.Add("X-Okapi-URL", baseUrl)
 
+			mock, _ := pgxmock.NewPool()
+			if d.establishMock != nil {
+				err = d.establishMock(mock)
+				assert.Nil(t, err)
+			}
+			session.dbConn = mock
+
+			client := http.Client{}
 			resp, err := client.Do(req)
 			if err != nil {
 				t.Errorf("cannot fetch %s: %v", url, err)
@@ -136,6 +140,7 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 			if !matched {
 				t.Errorf("body of %s does not match regexp /%s/: body = %s", url, d.expected, body)
 			}
+			assert.Nil(t, mock.ExpectationsWereMet(), "unfulfilled expections")
 		})
 	}
 }
