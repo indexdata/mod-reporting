@@ -36,13 +36,7 @@ func Test_server(t *testing.T) {
 
 
 func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
-	data := []struct {
-		name   string
-		sendData string
-		path   string
-		status int
-		expected     string
-	}{
+	data := []testT{
 		{
 			name: "home",
 			sendData: "",
