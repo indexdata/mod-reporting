@@ -10,6 +10,23 @@ import "encoding/json"
 import "github.com/jackc/pgx/v5"
 
 
+// Determine whether this is a MetaDB database, as opposed to LDP Classic
+func isMetaDB(dbConn PgxIface) (bool, error) {
+	var val int
+	magicQuery := "SELECT 1 FROM pg_class c JOIN pg_namespace n ON c.relnamespace=n.oid " +
+		"WHERE n.nspname='dbsystem' AND c.relname='main';"
+	err := dbConn.QueryRow(context.Background(), magicQuery).Scan(&val)
+	if err != nil && strings.Contains(err.Error(), "no rows") {
+		// Weirdly, metadb.base_table does not exist on MetaDB
+		return true, nil
+	} else if err != nil {
+		return false, fmt.Errorf("could not run isMetaDb query '%s': %w", magicQuery, err)
+	}
+
+	return false, nil
+}
+
+
 type dbTable struct {
 	SchemaName string `db:"schema_name" json:"schemaName"`
 	TableName string `db:"table_name" json:"tableName"`
@@ -29,7 +46,7 @@ func handleTables(w http.ResponseWriter, req *http.Request, session *ModReportin
 	if err != nil {
 		return fmt.Errorf("could not find reporting DB: %w", err)
 	}
-	tables, err := fetchTables(dbConn)
+	tables, err := fetchTables(dbConn, session.isMDB)
 	if err != nil {
 		return fmt.Errorf("could not fetch tables from reporting DB: %w", err)
 	}
@@ -38,8 +55,14 @@ func handleTables(w http.ResponseWriter, req *http.Request, session *ModReportin
 }
 
 
-func fetchTables(dbConn PgxIface) ([]dbTable, error) {
-	query := "SELECT schema_name, table_name FROM metadb.base_table"
+func fetchTables(dbConn PgxIface, isMetaDB bool) ([]dbTable, error) {
+	var query string
+	if isMetaDB {
+		query = "SELECT schema_name, table_name FROM metadb.base_table"
+	} else {
+		query = "SELECT table_name, table_schema as schema_name FROM information_schema.tables WHERE table_schema IN ('local', 'public', 'folio_reporting')"
+	}
+
 	rows, err := dbConn.Query(context.Background(), query)
 	if err != nil {
 		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
@@ -283,6 +306,17 @@ func handleReport(w http.ResponseWriter, req *http.Request, session *ModReportin
 		return fmt.Errorf("could not read report: %w", err)
 	}
 	sql := string(bytes)
+
+	if session.isMDB && strings.HasPrefix(sql, "--ldp:function") {
+		return fmt.Errorf("cannot run LDP Classic report in MetaDB")
+	} else if !session.isMDB && strings.HasPrefix(sql, "--metadb:function") {
+		return fmt.Errorf("cannot run MetaDB report in LDP Classic")
+	}
+
+	if !session.isMDB {
+		// LDP Classic needs this, for some reason
+		sql = "SET search_path = local, public;\n" + sql
+	}
 
 	cmd, err := makeFunctionCall(sql, query.Params, query.Limit)
 	if err != nil {

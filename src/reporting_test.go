@@ -320,6 +320,7 @@ func Test_reportingHandlers(t *testing.T) {
 				session.dbConn = nil
 			} else {
 				session.dbConn = mock
+				session.isMDB = true // Mock expectations are as for MetaDB
 			}
 
 			w := httptest.NewRecorder()
