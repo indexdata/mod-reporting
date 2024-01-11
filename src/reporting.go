@@ -308,6 +308,17 @@ func handleReport(w http.ResponseWriter, req *http.Request, session *ModReportin
 	}
 	sql := string(bytes)
 
+	if session.isMDB && strings.HasPrefix(sql, "--ldp:function") {
+		return fmt.Errorf("cannot run LDP Classic report in MetaDB")
+	} else if !session.isMDB && strings.HasPrefix(sql, "--metadb:function") {
+		return fmt.Errorf("cannot run MetaDB report in LDP Classic")
+	}
+
+	if !session.isMDB {
+		// LDP Classic needs this, for some reason
+		sql = "SET search_path = local, public;\n" + sql
+	}
+
 	cmd, err := makeFunctionCall(sql, query.Params, query.Limit)
 	if err != nil {
 		return fmt.Errorf("could not construct SQL function call: %w", err)
