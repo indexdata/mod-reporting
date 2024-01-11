@@ -149,6 +149,7 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 				assert.Nil(t, err)
 			}
 			session.dbConn = mock
+			session.isMDB = true // Mock expectations are as for MetaDB
 
 			client := http.Client{}
 			resp, err := client.Do(req)
