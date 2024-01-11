@@ -46,7 +46,7 @@ func handleTables(w http.ResponseWriter, req *http.Request, session *ModReportin
 	if err != nil {
 		return fmt.Errorf("could not find reporting DB: %w", err)
 	}
-	tables, err := fetchTables(dbConn)
+	tables, err := fetchTables(dbConn, session.isMDB)
 	if err != nil {
 		return fmt.Errorf("could not fetch tables from reporting DB: %w", err)
 	}
@@ -55,8 +55,15 @@ func handleTables(w http.ResponseWriter, req *http.Request, session *ModReportin
 }
 
 
-func fetchTables(dbConn PgxIface) ([]dbTable, error) {
-	query := "SELECT schema_name, table_name FROM metadb.base_table"
+func fetchTables(dbConn PgxIface, isMetaDB bool) ([]dbTable, error) {
+	var query string
+	if isMetaDB {
+		query = "SELECT schema_name, table_name FROM metadb.base_table"
+	} else {
+		query = "SELECT table_name, table_schema as schema_name FROM information_schema.tables WHERE table_schema IN ('local', 'public', 'folio_reporting')"
+	}
+
+	fmt.Printf("tables query: %s\n", query)
 	rows, err := dbConn.Query(context.Background(), query)
 	if err != nil {
 		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
