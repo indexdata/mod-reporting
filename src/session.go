@@ -12,6 +12,7 @@ import "github.com/jackc/pgx/v5/pgconn" // just for the data-type pgconn.Command
 type PgxIface interface {
 	Begin(context.Context) (pgx.Tx, error)
 	Query(context.Context, string, ...any) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
 	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
 	Close()
 }
@@ -22,6 +23,7 @@ type ModReportingSession struct {
 	tenant string
 	folioSession foliogo.Session
 	dbConn PgxIface
+	isMDB bool
 }
 
 
@@ -74,25 +76,41 @@ func (session *ModReportingSession)Log(cat string, args ...string) {
 }
 
 
+func (session *ModReportingSession)makeDbConn() (PgxIface, bool, error) {
+	dbUrl, dbUser, dbPass, err := getDbInfo(session.folioSession)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot extract data from 'dbinfo': %w", err)
+	}
+	session.Log("db", "url=" + dbUrl + ", user=" + dbUser)
+
+	// For historical reasons, database connection configuration is often JDBCish
+	dbUrl = strings.Replace(dbUrl, "jdbc:postgresql://", "", 1)
+	dbUrl = strings.Replace(dbUrl, "postgres://", "", 1)
+	// We may need `?sslmode=require` on the end of the URL.
+	dbConn, err := pgxpool.New(context.Background(), "postgres://" + dbUser + ":" + dbPass + "@" + dbUrl)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot connect to DB: %w", err)
+	}
+
+	session.Log("db", "connected to DB", dbUrl)
+	isMDB, err := isMetaDB(dbConn)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot determine whether reporting DB is MetaDB: %w", err)
+	}
+
+	session.Log("db", fmt.Sprintf("isMetaDB=%v", isMDB))
+	return dbConn, isMDB, nil
+}
+
+
 func (session *ModReportingSession) findDbConn() (PgxIface, error) {
 	if session.dbConn == nil {
-		dbUrl, dbUser, dbPass, err := getDbInfo(session.folioSession)
+		dbConn, isMDB, err := session.makeDbConn()
 		if err != nil {
-			return nil, fmt.Errorf("cannot extract data from 'dbinfo': %w", err)
+			return nil, err
 		}
-		session.Log("db", "url=" + dbUrl + ", user=" + dbUser)
-
-		// For historical reasons, database connection configuration is often JDBCish
-		dbUrl = strings.Replace(dbUrl, "jdbc:postgresql://", "", 1)
-		dbUrl = strings.Replace(dbUrl, "postgres://", "", 1)
-		// We may need `?sslmode=require` on the end of the URL.
-		conn, err := pgxpool.New(context.Background(), "postgres://" + dbUser + ":" + dbPass + "@" + dbUrl)
-		if err != nil {
-			return nil, fmt.Errorf("cannot connect to DB: %w", err)
-		}
-
-		session.dbConn = conn
-		session.Log("db", "connected to DB", dbUrl)
+		session.dbConn = dbConn
+		session.isMDB = isMDB
 	}
 
 	return session.dbConn, nil

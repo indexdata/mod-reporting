@@ -10,6 +10,23 @@ import "encoding/json"
 import "github.com/jackc/pgx/v5"
 
 
+// Determine whether this is a MetaDB database, as opposed to LDP Classic
+func isMetaDB(dbConn PgxIface) (bool, error) {
+	var val int
+	magicQuery := "SELECT 1 FROM pg_class c JOIN pg_namespace n ON c.relnamespace=n.oid " +
+		"WHERE n.nspname='dbsystem' AND c.relname='main';"
+	err := dbConn.QueryRow(context.Background(), magicQuery).Scan(&val)
+	if err != nil && strings.Contains(err.Error(), "no rows") {
+		// Weirdly, metadb.base_table does not exist on MetaDB
+		return true, nil
+	} else if err != nil {
+		return false, fmt.Errorf("could not run isMetaDb query '%s': %w", magicQuery, err)
+	}
+
+	return false, nil
+}
+
+
 type dbTable struct {
 	SchemaName string `db:"schema_name" json:"schemaName"`
 	TableName string `db:"table_name" json:"tableName"`
