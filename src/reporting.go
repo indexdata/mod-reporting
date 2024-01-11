@@ -63,7 +63,6 @@ func fetchTables(dbConn PgxIface, isMetaDB bool) ([]dbTable, error) {
 		query = "SELECT table_name, table_schema as schema_name FROM information_schema.tables WHERE table_schema IN ('local', 'public', 'folio_reporting')"
 	}
 
-	fmt.Printf("tables query: %s\n", query)
 	rows, err := dbConn.Query(context.Background(), query)
 	if err != nil {
 		return nil, fmt.Errorf("could not run query '%s': %w", query, err)
