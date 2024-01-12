@@ -329,12 +329,12 @@ func handleReport(w http.ResponseWriter, req *http.Request, session *ModReportin
 	}
 	defer tx.Rollback(context.Background())
 
-	_, err = dbConn.Exec(context.Background(), sql)
+	_, err = tx.Exec(context.Background(), sql)
 	if err != nil {
 		return fmt.Errorf("could not register SQL function: %w", err)
 	}
 
-	rows, err := dbConn.Query(context.Background(), cmd)
+	rows, err := tx.Query(context.Background(), cmd)
 	if err != nil {
 		return fmt.Errorf("could not execute SQL from report: %w", err)
 	}
