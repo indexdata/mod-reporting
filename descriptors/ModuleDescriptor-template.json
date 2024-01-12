@@ -42,6 +42,12 @@
       }
     ]
   } ],
+  "requires": [
+    {
+      "id": "settings",
+      "version": "1.0"
+    }
+  ],
   "permissionSets": [
     {
       "description": "Read LDP data",
