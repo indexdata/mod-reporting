@@ -8,37 +8,68 @@
       {
         "methods": [ "GET" ],
         "pathPattern" : "/ldp/db/log",
-        "permissionsRequired": [ "ldp.read" ]
+        "permissionsRequired": [ "ldp.read" ],
+        "modulePermissions" : [
+          "mod-settings.entries.collection.get",
+          "mod-settings.global.read.ui-ldp.admin"
+        ]
       },
       {
         "methods": [ "GET" ],
         "pathPattern" : "/ldp/db/columns",
-        "permissionsRequired": [ "ldp.read" ]
+        "permissionsRequired": [ "ldp.read" ],
+        "modulePermissions" : [
+          "mod-settings.entries.collection.get",
+          "mod-settings.global.read.ui-ldp.admin"
+        ]
       },
       {
         "methods": [ "GET" ],
         "pathPattern" : "/ldp/db/tables",
-        "permissionsRequired": [ "ldp.read" ]
+        "permissionsRequired": [ "ldp.read" ],
+        "modulePermissions" : [
+          "mod-settings.entries.collection.get",
+          "mod-settings.global.read.ui-ldp.admin"
+        ]
       },
       {
         "methods": [ "POST" ],
         "pathPattern" : "/ldp/db/query",
-        "permissionsRequired": [ "ldp.read" ]
+        "permissionsRequired": [ "ldp.read" ],
+        "modulePermissions" : [
+          "mod-settings.entries.collection.get",
+          "mod-settings.global.read.ui-ldp.admin"
+        ]
       },
       {
         "methods": [ "POST" ],
         "pathPattern" : "/ldp/db/reports",
-        "permissionsRequired": [ "ldp.read" ]
+        "permissionsRequired": [ "ldp.read" ],
+        "modulePermissions" : [
+          "mod-settings.entries.collection.get",
+          "mod-settings.global.read.ui-ldp.admin"
+        ]
       },
       {
         "methods" : [ "PUT" ],
         "pathPattern" : "/ldp/config/{id}",
-        "permissionsRequired" : [ "ldp.config.edit"]
+        "permissionsRequired" : [ "ldp.config.edit"],
+        "modulePermissions" : [
+          "mod-settings.entries.collection.get",
+          "mod-settings.entries.item.post",
+          "mod-settings.entries.item.put",
+          "mod-settings.global.read.ui-ldp.admin",
+          "mod-settings.global.write.ui-ldp.admin"
+        ]
       },
       {
         "methods" : [ "GET" ],
         "pathPattern" : "/ldp/config*",
-        "permissionsRequired" : [ "ldp.config.read"]
+        "permissionsRequired" : [ "ldp.config.read"],
+        "modulePermissions" : [
+          "mod-settings.entries.collection.get",
+          "mod-settings.global.read.ui-ldp.admin"
+        ]
       }
     ]
   } ],
