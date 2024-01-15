@@ -10,6 +10,7 @@ on:
       - '**.go'
       - 'etc/config.json'
       - 'Dockerfile' # Run this workflow first to ensure tests are passing
+      - 'descriptors/ModuleDescriptor-template.json'
       - '.github/workflows/*.yml'
   pull_request:
     branches: [ "main" ]
