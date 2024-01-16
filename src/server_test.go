@@ -91,7 +91,7 @@ func runTests(t *testing.T, baseUrl string, session *ModReportingSession) {
 				return establishMockForTables(data.(pgxmock.PgxPoolIface))
 			},
 			status: 200,
-			expected: `\[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}\]`,
+			expected: `\[{"tableSchema":"folio_inventory","tableName":"records_instances"},{"tableSchema":"folio_inventory","tableName":"holdings_record"}\]`,
 		},
 		{
 			name: "fetch columns",

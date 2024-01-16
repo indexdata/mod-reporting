@@ -13,7 +13,7 @@ func Test_handleConfig(t *testing.T) {
 			name: "fetch all configs from table",
 			path: "/ldp/config",
 			function: handleConfig,
-			expected: `[{"key":"config","tenant":"dummyTenant","value":"v1"}]`,
+			expected: `\[{"key":"config","tenant":"dummyTenant","value":"v1"}\]`,
 		},
 		{
 			name: "fetch single config",

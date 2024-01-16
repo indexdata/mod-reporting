@@ -125,7 +125,7 @@ func Test_reportingHandlers(t *testing.T) {
 				return establishMockForTables(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleTables,
-			expected: `[{"schemaName":"folio_inventory","tableName":"records_instances"},{"schemaName":"folio_inventory","tableName":"holdings_record"}]`,
+			expected: `\[{"tableSchema":"folio_inventory","tableName":"records_instances"},{"tableSchema":"folio_inventory","tableName":"holdings_record"}\]`,
 		},
 		{
 			name: "list of columns without table",
@@ -212,7 +212,7 @@ func Test_reportingHandlers(t *testing.T) {
 				return establishMockForQuery(data.(pgxmock.PgxPoolIface))
 			},
 			function: handleQuery,
-			expected: `[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}]`,
+			expected: `\[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}\]`,
 		},
 		{
 			name: "malformed report",

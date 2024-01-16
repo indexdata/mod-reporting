@@ -28,7 +28,7 @@ func isMetaDB(dbConn PgxIface) (bool, error) {
 
 
 type dbTable struct {
-	SchemaName string `db:"schema_name" json:"schemaName"`
+	SchemaName string `db:"schema_name" json:"tableSchema"`
 	TableName string `db:"table_name" json:"tableName"`
 }
 
