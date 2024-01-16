@@ -2,6 +2,7 @@ package main
 
 import "os"
 import "errors"
+import "strings"
 import "encoding/json"
 import "github.com/indexdata/foliogo"
 
@@ -25,6 +26,18 @@ type settingsResponse struct {
 	ResultInfo settingsResultInfo `json:"resultInfo"`
 }
 
+
+// If the value is encoded as a string: see issue #60
+type oldSettingsItem struct {
+	Value string `json:"value"`
+}
+
+type oldSettingsResponse struct {
+	Items []oldSettingsItem `json:"items"`
+	ResultInfo settingsResultInfo `json:"resultInfo"`
+}
+
+
 func getDbInfo(session foliogo.Session, token string) (string, string, string, error) {
 	// If defined, environment variables override the setting from the database
 	dburl := os.Getenv("REPORTING_DB_URL")
@@ -43,11 +56,42 @@ func getDbInfo(session foliogo.Session, token string) (string, string, string, e
 	var r settingsResponse
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
-		return "", "", "", errors.New("decode 'dbinfo' JSON failed: " + err.Error())
+		if !strings.Contains(err.Error(), "Go struct field settingsItem.items.value") {
+			return "", "", "", errors.New("decode 'dbinfo' JSON failed: " + err.Error())
+		}
+
+		var oldR oldSettingsResponse
+		err = json.Unmarshal(bytes, &oldR)
+		if err != nil {
+			return "", "", "", errors.New("decode 'dbinfo' old-style JSON failed: " + err.Error())
+		}
+
+		err = convertResultInfo(oldR, &r)
+		if err != nil {
+			return "", "", "", err
+		}
 	}
+
 	if r.ResultInfo.TotalRecords < 1 {
 		return "", "", "", errors.New("no 'dbinfo' setting in FOLIO database")
 	}
 	value := r.Items[0].Value
 	return value.Url, value.User, value.Pass, nil
 }
+
+
+func convertResultInfo(oldR oldSettingsResponse, r *settingsResponse) error {
+	r.ResultInfo = oldR.ResultInfo
+
+	count := len(oldR.Items)
+	r.Items = make([]settingsItem, count)
+	for i := 0; i < count; i++ {
+		err := json.Unmarshal([]byte(oldR.Items[i].Value), &r.Items[i].Value)
+		if err != nil {
+			return errors.New("decode 'dbinfo' old-style value failed: " + err.Error())
+		}
+	}
+
+	return nil
+}
+
