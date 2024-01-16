@@ -25,7 +25,7 @@ type settingsResponse struct {
 	ResultInfo settingsResultInfo `json:"resultInfo"`
 }
 
-func getDbInfo(session foliogo.Session) (string, string, string, error) {
+func getDbInfo(session foliogo.Session, token string) (string, string, string, error) {
 	// If defined, environment variables override the setting from the database
 	dburl := os.Getenv("REPORTING_DB_URL")
 	dbuser := os.Getenv("REPORTING_DB_USER")
@@ -34,7 +34,8 @@ func getDbInfo(session foliogo.Session) (string, string, string, error) {
 		return dburl, dbuser, dbpass, nil
 	}
 
-	bytes, err := session.Fetch0(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="dbinfo"`)
+	params := foliogo.RequestParams{ Token: token }
+	bytes, err := session.Fetch(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="dbinfo"`, params)
 	if err != nil {
 		return "", "", "", errors.New("cannot fetch 'dbinfo' from config: " + err.Error())
 	}

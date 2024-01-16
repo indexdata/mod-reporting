@@ -42,7 +42,7 @@ type dbColumn struct {
 
 
 func handleTables(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
-	dbConn, err := session.findDbConn()
+	dbConn, err := session.findDbConn(req.Header.Get("X-Okapi-Token"))
 	if err != nil {
 		return fmt.Errorf("could not find reporting DB: %w", err)
 	}
@@ -81,7 +81,7 @@ func handleColumns(w http.ResponseWriter, req *http.Request, session *ModReporti
 		return fmt.Errorf("must specify both schema and table")
 	}
 
-	dbConn, err := session.findDbConn()
+	dbConn, err := session.findDbConn(req.Header.Get("X-Okapi-Token"))
 	if err != nil {
 		return fmt.Errorf("could not find reporting DB: %w", err)
 	}
@@ -142,7 +142,7 @@ type jsonQuery struct {
 
 
 func handleQuery(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
-	dbConn, err := session.findDbConn()
+	dbConn, err := session.findDbConn(req.Header.Get("X-Okapi-Token"))
 	if err != nil {
 		return fmt.Errorf("could not find reporting DB: %w", err)
 	}
@@ -272,7 +272,7 @@ type reportResponse struct {
 }
 
 func handleReport(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error {
-	dbConn, err := session.findDbConn()
+	dbConn, err := session.findDbConn(req.Header.Get("X-Okapi-Token"))
 	if err != nil {
 		return fmt.Errorf("could not find reporting DB: %w", err)
 	}

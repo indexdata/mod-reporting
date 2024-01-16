@@ -76,8 +76,8 @@ func (session *ModReportingSession)Log(cat string, args ...string) {
 }
 
 
-func (session *ModReportingSession)makeDbConn() (PgxIface, bool, error) {
-	dbUrl, dbUser, dbPass, err := getDbInfo(session.folioSession)
+func (session *ModReportingSession)makeDbConn(token string) (PgxIface, bool, error) {
+	dbUrl, dbUser, dbPass, err := getDbInfo(session.folioSession, token)
 	if err != nil {
 		return nil, false, fmt.Errorf("cannot extract data from 'dbinfo': %w", err)
 	}
@@ -103,9 +103,9 @@ func (session *ModReportingSession)makeDbConn() (PgxIface, bool, error) {
 }
 
 
-func (session *ModReportingSession) findDbConn() (PgxIface, error) {
+func (session *ModReportingSession) findDbConn(token string) (PgxIface, error) {
 	if session.dbConn == nil {
-		dbConn, isMDB, err := session.makeDbConn()
+		dbConn, isMDB, err := session.makeDbConn(token)
 		if err != nil {
 			return nil, err
 		}

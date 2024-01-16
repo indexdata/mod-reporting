@@ -63,7 +63,7 @@ func Test_session(t *testing.T) {
 	/*
 	t.Run("find reporting database connection", func(t *testing.T) {
 		session := makeGoodSession(t)
-		db, error := session.findDbConn()
+		db, error := session.findDbConn("")
 		assert.Nil(t, error)
 		assert.NotNil(t, db) // That's all we can ask about this opaque object
 	})
