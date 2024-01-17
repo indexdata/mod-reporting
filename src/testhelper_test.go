@@ -1,5 +1,6 @@
 package main
 
+import "errors"
 import "fmt"
 import "net/http"
 import "net/http/httptest"
@@ -159,6 +160,13 @@ func establishMockForQuery(mock pgxmock.PgxPoolIface) error {
 		WillReturnRows(pgxmock.NewRows([]string{"name", "email"}).
 			AddRow("mike", "mike@example.com").
 			AddRow("fiona", "fiona@example.com"))
+	return nil
+}
+
+func establishMockForEmptyFilterQuery(mock pgxmock.PgxPoolIface) error {
+	mock.ExpectQuery(`SELECT \* FROM "folio"."users"`).
+		WithArgs("").
+		WillReturnError(errors.New(`ERROR: syntax error at or near "=" (SQLSTATE 42601)`))
 	return nil
 }
 

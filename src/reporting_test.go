@@ -205,7 +205,7 @@ func Test_reportingHandlers(t *testing.T) {
 			errorstr: "cannot unmarshal string",
 		},
 		{
-			name: "simple query with dummy reslts",
+			name: "simple query with dummy results",
 			path: "/ldp/db/query",
 			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users" }] }`,
 			establishMock: func(data interface{}) error {
@@ -213,6 +213,17 @@ func Test_reportingHandlers(t *testing.T) {
 			},
 			function: handleQuery,
 			expected: `\[{"email":"mike@example.com","name":"mike"},{"email":"fiona@example.com","name":"fiona"}\]`,
+		},
+		{
+			// This test doesn't really test anything except my ability to mock PGX errors
+			name: "query with an empty filter",
+			path: "/ldp/db/query",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users", "columnFilters": [{}] }] }`,
+			establishMock: func(data interface{}) error {
+				return establishMockForEmptyFilterQuery(data.(pgxmock.PgxPoolIface))
+			},
+			function: handleQuery,
+			errorstr: `ERROR: syntax error at or near "=" (SQLSTATE 42601)`,
 		},
 		{
 			name: "malformed report",
