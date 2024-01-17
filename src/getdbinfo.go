@@ -3,6 +3,7 @@ package main
 import "os"
 import "errors"
 import "strings"
+import "fmt"
 import "encoding/json"
 import "github.com/indexdata/foliogo"
 
@@ -50,20 +51,20 @@ func getDbInfo(session foliogo.Session, token string) (string, string, string, e
 	params := foliogo.RequestParams{ Token: token }
 	bytes, err := session.Fetch(`settings/entries?query=scope=="ui-ldp.admin"+and+key=="dbinfo"`, params)
 	if err != nil {
-		return "", "", "", errors.New("cannot fetch 'dbinfo' from config: " + err.Error())
+		return "", "", "", fmt.Errorf("cannot fetch 'dbinfo' from config: : %w", err)
 	}
 
 	var r settingsResponse
 	err = json.Unmarshal(bytes, &r)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Go struct field settingsItem.items.value") {
-			return "", "", "", errors.New("decode 'dbinfo' JSON failed: " + err.Error())
+			return "", "", "", fmt.Errorf("decode 'dbinfo' JSON failed: %w", err)
 		}
 
 		var oldR oldSettingsResponse
 		err = json.Unmarshal(bytes, &oldR)
 		if err != nil {
-			return "", "", "", errors.New("decode 'dbinfo' old-style JSON failed: " + err.Error())
+			return "", "", "", fmt.Errorf("decode 'dbinfo' old-style JSON failed: %w", err)
 		}
 
 		err = convertResultInfo(oldR, &r)
@@ -88,7 +89,7 @@ func convertResultInfo(oldR oldSettingsResponse, r *settingsResponse) error {
 	for i := 0; i < count; i++ {
 		err := json.Unmarshal([]byte(oldR.Items[i].Value), &r.Items[i].Value)
 		if err != nil {
-			return errors.New("decode 'dbinfo' old-style value failed: " + err.Error())
+			return fmt.Errorf("decode 'dbinfo' old-style value failed: %w", err)
 		}
 	}
 
