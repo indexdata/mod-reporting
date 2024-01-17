@@ -184,12 +184,9 @@ func makeSql(query jsonQuery) (string, []any, error) {
 	qt := query.Tables[0]
 
 	sql := "SELECT " + makeColumns(qt.Columns) + ` FROM "` + qt.Schema + `"."` + qt.Table + `"`
-	if len(qt.Filters) > 0 {
-		sql += " WHERE " + makeCond(qt.Filters)
-	}
-	params := make([]any, len(qt.Filters))
-	for i, val := range(qt.Filters) {
-		params[i] = val.Value
+	filterString, params := makeCond(qt.Filters)
+	if filterString != "" {
+		sql += " WHERE " + filterString
 	}
 	if len(qt.Order) > 0 {
 		sql += " ORDER BY " + makeOrder(qt.Order)
@@ -219,9 +216,17 @@ func makeColumns(cols []string) string {
 }
 
 
-func makeCond(filters []queryFilter) string {
+func makeCond(filters []queryFilter) (string, []any) {
+	params := make([]any, 0)
+
 	s := ""
 	for i, filter := range(filters) {
+		if filter.Key == "" {
+			continue
+		}
+		if s != "" {
+			s += " AND "
+		}
 		s += filter.Key
 		if filter.Op == "" {
 			s += " = "
@@ -229,12 +234,11 @@ func makeCond(filters []queryFilter) string {
 			s += " " + filter.Op + " "
 		}
 		s += fmt.Sprintf("$%d", i+1)
-		if i < len(filters)-1 {
-			s += " AND "
-		}
+
+		params = append(params, filter.Value)
 	}
 
-	return s
+	return s, params
 }
 
 

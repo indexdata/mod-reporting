@@ -35,6 +35,13 @@ func Test_makeSql(t *testing.T) {
 			expectedArgs: []string{},
 		},
 		{
+			name: "query with empty condition",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users",
+				"columnFilters": [{}] }] }`,
+			expected: `SELECT * FROM "folio"."users"`,
+			expectedArgs: []string{},
+		},
+		{
 			name: "query with implicit condition",
 			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users",
 				"columnFilters": [
@@ -52,6 +59,16 @@ func Test_makeSql(t *testing.T) {
 				] }] }`,
 			expected: `SELECT * FROM "folio"."users" WHERE id > $1 AND user LIKE $2`,
 			expectedArgs: []string{"42", "mi%"},
+		},
+		{
+			name: "query with real and empty conditions",
+			sendData: `{ "tables": [{ "schema": "folio", "tableName": "users",
+				"columnFilters": [
+					{},
+					{ "key": "user", "op": "LIKE", "value": "mi%" }
+				] }] }`,
+			expected: `SELECT * FROM "folio"."users" WHERE user LIKE $2`,
+			expectedArgs: []string{"mi%"},
 		},
 		{
 			name: "query with order",
