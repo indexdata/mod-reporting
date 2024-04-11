@@ -77,11 +77,16 @@ As noted in the first bullet point of Appendix A, I intend to add developer docu
 
 ## Appendix C. Changes to make to user documentation
 
-Again, these observations arise from my reading of the user documentation, coming to it as a newbie.
+Again, these observations arise from my reading of the user documentation, coming to it as a newbie. Some of the issues raised here should be addressed just in the documentation, but some may turn out to be questions about implementation decisions.
 
 * Leaping straight from "1.1. Getting started" to "1.2. Main tables" is bewildering. We really need more discussion of the concepts in between these sections. For example, that records have start and end datetimes which bound the period of their relevance in historic data.
 
-* The "Main tables" and "Current tables" sections should be subsections of a higher-level section that describes the concepts in a high-level way.
+* The "Main tables", "Current tables" and "Transformed tables" sections should be subsections of a higher-level section that describes the concepts in a high-level way and outlines the naming conventions (including transformed main tables such as `patrongroup__t__`).
 
-* In current tables, I assume that `__id` and `__origin` columns exist (as in main tables) but probably not `__start`, `__end` or `__current`?
+* The example in section 1.3 shows that the `__id`, `__start` and `__origin` columns exist in current tables (as in main tables). But what about `__end` and `__current`?
+
+* "In the current version of Metadb, only top-level, scalar JSON fields are
+extracted into transformed tables". I need to find out what non-top-level and non-scalar fields are.
+
+* Is there any particular reason why the names of special tables _end_ with `__`, as in `patrongroup__`, while the names of special fields _begin_ with `__`, as in `__start`?
 
