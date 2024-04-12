@@ -136,3 +136,7 @@ one JSON record." More precisely, the table definition is created dynamically co
 
 * In section 3.8.2 (Creating a connector), "... by setting `wal_level = logical` in `postgresql.conf`." This is in the source (FOLIO) Postgres database, not Metadb's database.
 
+* Sections 3.8.3 (Monitoring replication) 3.8.6 (Deleting a connection) are completely opaque to me. When I understand them, I will expand them.
+
+XXX Read to end of section 3.
+
