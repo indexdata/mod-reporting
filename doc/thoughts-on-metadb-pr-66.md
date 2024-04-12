@@ -85,18 +85,22 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * The example in section 1.3 shows that the `__id`, `__start` and `__origin` columns exist in current tables (as in main tables). But what about `__end` and `__current`?
 
-* "In the current version of Metadb, only top-level, scalar JSON fields are
-extracted into transformed tables." I need to find out what non-top-level and non-scalar fields are.
+* In section 1.4, "In the current version of Metadb, only top-level, scalar JSON fields are extracted into transformed tables." I need to find out what non-top-level and non-scalar fields are.
 
-* Is there any particular reason why the names of special tables _end_ with `__`, as in `patrongroup__`, while the names of special fields _begin_ with `__`, as in `__start`?
+* "Note that JSON data are treated as "schemaless," and fields are inferred from
+their presence in the data rather than read from a JSON schema.  As a result, a
+column is only created from a JSON field if the field is present in at least
+one JSON record." More precisely, the table definition is created dynamically continually: _each_ record added will result in the addition of a new column if a JSON field in that record contains a field not previously seen.
 
-* "For monetary amounts, `numeric(19, 4)` is usually a good choice.  For exchange rates, `numeric(19, 14)` may be used." Why?
+* Is there any particular reason why the names of special tables _end_ with `__`, as in `patrongroup__`, while the names of special fields _begin_ with `__`, as in `__start`? All of the related tables are grouped together when sorting alphabetically.
+
+* In section 1.7: "For monetary amounts, `numeric(19, 4)` is usually a good choice.  For exchange rates, `numeric(19, 14)` may be used." Why?
 
 * Section 1.8. on Creating reports should include information on publishing them to GitHub for use in the FOLIO Reporting app.
 
 * Section 1.10 explains for a running MetaDB instance can provide information about itself, such as its version number, when the various tables were last updated, system logging messages and query status. It would be helpful to expose at least some of this in the Reporting app. I have filed [a UILDP issue in Jira](https://folio-org.atlassian.net/browse/UILDP-148) and [a mod-reporting issue in the GitHub tracker](https://github.com/indexdata/mod-reporting/issues/66) so we don't forget about this.
 
-* Section 2.1. Data type conversion seems to be referring to on-the-fly adjustments to the definitions of existing tables based on ingesting new data. Am I interpreting that correctly? In the table in section 2.1.1, how does MetaDB decide which conversion to apply?
+* Section 2.1. Data type conversion seems to be referring to on-the-fly adjustments to the definitions of existing tables based on ingesting new data. Am I interpreting that correctly? In the table in section 2.1.1, how does MetaDB decide which conversion to apply? This is about how existing columns get their types “promoted” to enable them to encompass values of both the old and new records’ types.
 
 * In section 2.4, "Metadb allows scheduling external SQL files to run on a regular basis." How? Also, "any tables created should not specify a schema name." Why not? Are all these tables implicitly in an "external directives" schema?
 
@@ -114,4 +118,21 @@ extracted into transformed tables." I need to find out what non-top-level and no
 
 * In section 2.5.5, "CREATE USER defines a new database user that will be managed by Metadb." What does it mean for MetaDB to manage the user?
 
-XXX note to self: read to the end of section 2.
+* In section 3.1.1 (Hardware requirements), “Architecture: x86-64 (AMD64)“. Why does MetaDB care what architecture CPU it’s compiled for? Metadb is tested primarily on x86-64.  DevOps will want to try running it on ARM64, which is relatively new and not fully supported (or was not fully supported at last check) in some of the libraries.  Things like atomics used for spinlocks and also the Kafka client library.  This should be revisited once in a while to see if we can test on and support ARM64.
+
+* In section 3.1.2 (Software requirements), "Operating system: Debian 12 or later". Is that saying that Debian is _required_ (i.e. I won't be able to run MetaDB on my MacBook), or just that it's the primary development OS?
+
+* Section 3.3. Server configuration should be preceded by a section on the different ways to invoke the `metadb` binary as a command-line tool or server.
+
+* In section 3.3, "superuser = postgres // superuser_password = zpreCaWS7S79dt82zgvD". Why does MetaDB need superuser access to Postgres?
+
+* In section 3.4 (Backups): "In general persistent data are stored in the database, and so the database should be backed up often." This should have a link to how this is best done for Postgres.
+
+* In section 3.7, it seems that a MetaDB server _is_ a Postgres server, but with extensions. If that's correct, it's worth saying explicitly. If so, then reason the `mdb` command-line client is legacy code is probably that we use `psql` instead.
+
+* In section 3.8.1, "Metadb currently supports reading Kafka messages in the format produced by the Debezium PostgreSQL connector for Kafka Connect." Links are needed here ... and I have a lot of learning to do.
+
+* In that section "A source PostgreSQL database" is presumably a FOLIO or ReShare database in our primary use cases.
+
+* In section 3.8.2 (Creating a connector), "... by setting `wal_level = logical` in `postgresql.conf`." This is in the source (FOLIO) Postgres database, not Metadb's database.
+
