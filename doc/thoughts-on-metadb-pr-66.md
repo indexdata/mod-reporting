@@ -85,7 +85,7 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * The example in section 1.3 shows that the `__id`, `__start` and `__origin` columns exist in current tables (as in main tables). But what about `__end` and `__current`?
 
-* In section 1.4, "In the current version of Metadb, only top-level, scalar JSON fields are extracted into transformed tables." I need to find out what non-top-level and non-scalar fields are.
+* In section 1.4, "In the current version of Metadb, only top-level, scalar JSON fields are extracted into transformed tables." We need to explain what non-top-level and non-scalar fields are. Section 4.1.4.4 impliciy explains this when it discusses extracting array values from JSONB fields.
 
 * "Note that JSON data are treated as "schemaless," and fields are inferred from
 their presence in the data rather than read from a JSON schema.  As a result, a
@@ -138,5 +138,33 @@ one JSON record." More precisely, the table definition is created dynamically co
 
 * Sections 3.8.3 (Monitoring replication) 3.8.6 (Deleting a connection) are completely opaque to me. When I understand them, I will expand them.
 
-XXX Read to end of section 3.
+* In section 4.1.1, "Metadb transforms MARC records from the tables `marc_records_lb` and `records_lb` in schema `folio_source_record` to a tabular form which is stored in a new table, `folio_source_record.marc__t`." Is this set of schema and table names hardwired, or is there configuration for it?
+
+* "Only records considered to be current are transformed, where current is defined as having `state = 'ACTUAL'` and an identifier present in `999 ff $i`." Is this a widespread notion of what it means for a MARC record to be “current”, or a FOLIO-specific convention?
+
+* Also, what does the `ff` in `999 ff $i` mean?
+
+* "The MARC transform stores partition tables in the schema `marctab`." What is a partition table in this context? It doesn't seem to be to do with horizontal or vertical partitioning of tables.
+
+* "FOLIO "derived tables" are automatically updated once per day, usually at about 3:00 UTC by default." The document does not introduce the term "derived table". What are they? How are they configured?
+
+* Section 4.1.3. (Data model) should talk more about what can be known about the FOLIO-derived tables, as well as noting what is not documented. And maybe also list some specific important tables.
+
+* In section 4.1.4.1. "Table names have changed and now are derived from FOLIO internal table names". The bigger change here seems to be that the tables are spread across many different schemas. Where do the schema names come from? Are they simply copied from the schema names in the source database? Is it that LDP Classic used to map FOLIO's schema.table pairs to its own favoured names but that MetaDB has dropped that mapping step?
+
+* In section 4.1.4.5, "Note that JSON data contained in the imported records are not transformed into columns." Is there a way to trigger this transformation after the import is complete?
+
+* Section 4.1.5 (Configuring Metadb for FOLIO) should come much earlier in the document. It raises several questions:
+  * "use the `module 'folio'` option" -- what exactly does this do? Section 2.5.4 on CREATE DATA SOURCE says that `module` specifies "Name of pre-defined configuration", but is this merely a shortcut, or is doing something distinctive of its own?
+  * "Set `trimschemaprefix` to remove the tenant from schema names": why? Don't we want separate tenants' data to be separated in MetaDB? Or do we expect to use an entire separate Postgres database for each tenant?
+  * "Set [...] `addschemaprefix` to add a `folio_` prefix to the schema names" -- what does this get us?
+  * "In the Debezium PostgreSQL connector configuration, the following exclusions are suggested [list]". It would be interested to know the reasons for these exclusions. I am guessing most of them are omitted just because they are not of interest (e.g. pubsub state) but that `mod_login` is omitted for security reasons?
+
+* In section 4.2.2 (Configuring Metadb for ReShare), "Before defining a ReShare data source, create a data origin for each consortial tenant". Does this mean each tenant _in_ a consortium, or each tenant _that represents_ a consortium? More generally, do these instructions pertain to using MetaDB for a ReShare tenant or for a ReShare consortium?
+
+* Why no `trimschemaprefix` when ingesting from ReShare?
+
+* At the end of section 4.2.2, some backquote slippage results in a hunk of text being in code font.
+
+* Section 4.3 (MARC transform for LDP) makes it clear that MARC transformation for LDP Classic is done by an external program. Is that true of MetaDB, too, or is the MARC transformation integrated?
 
