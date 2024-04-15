@@ -68,101 +68,102 @@ As noted in the first bullet point of Appendix A, I intend to add developer docu
 
 * The list of top-level features mentioned at the start of [the user documentation](https://metadb.dev/doc/) is probably worth using as a high-level overview of the code:
   * streaming data sources
-    * probably multiple kinds of source?
+    * In principle, multiple kinds of source: so far, only kafka
   * data model transforms
   * historical data
 
-* "The data contained in the Metadb database originally come from another place: a *data source*." I assume multiple sources can contribute to a single MetaDB store, but this is worth checking.
+* "The data contained in the Metadb database originally come from another place: a *data source*." Multiple sources can contribute to a single MetaDB store. We don't presently have real-world configurations that do this, but a theoretical example where this would be useful might be if a FOLIO instance has their module storage backends split across different database instances.
 
 
 ## Appendix C. Changes to make to user documentation
 
 Again, these observations arise from my reading of the user documentation, coming to it as a newbie. Some of the issues raised here are merely requests for clarification, and should be addressed just in the documentation; but some may turn out to be questions about implementation decisions.
 
-* Leaping straight from "1.1. Getting started" to "1.2. Main tables" is bewildering. We really need more discussion of the concepts in between these sections. For example, a MetaDB database _is_ a Postgres database that is expected to be used in the same ways as other Postgres databases; that certain GUI tools can be used for querying; that records have start and end datetimes which bound the period of their relevance in historic data.
+* Leaping straight from "1.1. Getting started" to "1.2. Main tables" is bewildering. We really need more discussion of the concepts in between these sections. For example, a MetaDB database _is_ a Postgres database that is expected to be used in the same ways as other Postgres databases; that the same `psql` client is used to access both Postgres and MetaDB, but the latter does not fully proxy to the former; that certain GUI tools can be used for querying; that records have start and end datetimes which bound the period of their relevance in historic data.
 
 * The "Main tables", "Current tables" and "Transformed tables" sections should be subsections of a higher-level section that describes the concepts in a high-level way and outlines the naming conventions (including transformed main tables such as `patrongroup__t__`).
 
 * The example in section 1.3 shows that the `__id`, `__start` and `__origin` columns exist in current tables (as in main tables). But what about `__end` and `__current`?
 
-* In section 1.4, "In the current version of Metadb, only top-level, scalar JSON fields are extracted into transformed tables." We need to explain what non-top-level and non-scalar fields are. Section 4.1.4.4 impliciy explains this when it discusses extracting array values from JSONB fields.
+* In section 1.4, "In the current version of Metadb, only top-level, scalar JSON fields are extracted into transformed tables." We need to explain what non-top-level and non-scalar fields are. Section 4.1.4.4 implicitly explains this when it discusses extracting array values from JSONB fields.
 
-* "Note that JSON data are treated as "schemaless," and fields are inferred from
-their presence in the data rather than read from a JSON schema.  As a result, a
-column is only created from a JSON field if the field is present in at least
-one JSON record." More precisely, the table definition is created dynamically continually: _each_ record added will result in the addition of a new column if a JSON field in that record contains a field not previously seen.
+* "Note that JSON data are treated as "schemaless," and fields are inferred from their presence in the data rather than read from a JSON schema.  As a result, a column is only created from a JSON field if the field is present in at least one JSON record." More precisely, the table definition is created dynamically continually: _each_ record added will result in the addition of a new column if a JSON field in that record contains a field not previously seen.
 
-* Is there any particular reason why the names of special tables _end_ with `__`, as in `patrongroup__`, while the names of special fields _begin_ with `__`, as in `__start`? All of the related tables are grouped together when sorting alphabetically.
+* I wondered if there there was any particular reason why the names of special tables _end_ with `__`, as in `patrongroup__`, while the names of special fields _begin_ with `__`, as in `__start`? The reason is that all of the related tables are grouped together when sorting alphabetically.
 
-* In section 1.7: "For monetary amounts, `numeric(19, 4)` is usually a good choice.  For exchange rates, `numeric(19, 14)` may be used." Why?
+* In section 1.7: "For monetary amounts, `numeric(19, 4)` is usually a good choice.  For exchange rates, `numeric(19, 14)` may be used." This is standard practice to avoid round-off errors in financial accounting databases.
 
 * Section 1.8. on Creating reports should include information on publishing them to GitHub for use in the FOLIO Reporting app.
 
-* Section 1.10 explains for a running MetaDB instance can provide information about itself, such as its version number, when the various tables were last updated, system logging messages and query status. It would be helpful to expose at least some of this in the Reporting app. I have filed [a UILDP issue in Jira](https://folio-org.atlassian.net/browse/UILDP-148) and [a mod-reporting issue in the GitHub tracker](https://github.com/indexdata/mod-reporting/issues/66) so we don't forget about this.
+* Section 1.10 explains how a running MetaDB instance can provide information about itself, such as its version number, when the various tables were last updated, system logging messages and query status. It would be helpful to expose at least some of this in the Reporting app. I have filed [a UILDP issue in Jira](https://folio-org.atlassian.net/browse/UILDP-148) and [a mod-reporting issue in the GitHub tracker](https://github.com/indexdata/mod-reporting/issues/66) so we don't forget about this.
 
-* Section 2.1. Data type conversion seems to be referring to on-the-fly adjustments to the definitions of existing tables based on ingesting new data. Am I interpreting that correctly? In the table in section 2.1.1, how does MetaDB decide which conversion to apply? This is about how existing columns get their types “promoted” to enable them to encompass values of both the old and new records’ types.
+* Section 2.1. Data type conversion refers to on-the-fly adjustments to the definitions of existing tables based on ingesting new data. The table in section 2.1.1 is about how existing columns get their types “promoted” to enable them to encompass values of both the old and new records’ types. MetaDB decides which conversion to apply on the basis of what type can support the types of all values provided in records.
 
-* In section 2.4, "Metadb allows scheduling external SQL files to run on a regular basis." How? Also, "any tables created should not specify a schema name." Why not? Are all these tables implicitly in an "external directives" schema?
+* In section 2.4, "Metadb allows scheduling external SQL files to run on a regular basis." That is all hard-coded at the moment. The word "scheduling" there is misleading because at the moment there are no configuration knobs. When  a data source is configured, the `module` setting optionally specifies `folio` or `reshare`.  If one of those is specified, it enables the external SQL with specific hardcoded values.  That is the only configuration for external SQL at the moment. A relatively high priority feature would be to add configuration knobs to that, including the Git repository, tag, path, etc., and time of day and frequency when the SQL should run.  Ideally, this will work best if fully generalized to allow arbitrary scheduling of SQL.  The best way to describe this is a "job scheduler" and there is [a placeholder issue for it](https://github.com/metadb-project/metadb/issues/43).
 
-* In section 2.4.1, "The --metadb:table directive declares that the SQL file updates a specific table.  This allows Metadb to report on the status of the table." How?
+* XXX "Any tables created should not specify a schema name." Why not? Are all these tables implicitly in an "external directives" schema? It seems this is friendly advice rather than a prohibition.
 
-* In section 2.5, "These statements are only available when connecting to the Metadb server (not the database)." How does one do that?
+* XXX In section 2.4.1, "The --metadb:table directive declares that the SQL file updates a specific table.  This allows Metadb to report on the status of the table." How?
 
-* Section 2.5.2. ALTER TABLE: how is this different from regular `ALTER TABLE`? (Comments along the lines of "It differs from GRANT in thatthe authorization will also apply to tables created at a later time in the data source" in section 2.5.3 would be helpful here.)
+* In section 2.5, "These statements are only available when connecting to the Metadb server (not the database)." i.e. when `psql` or a similar program is targeted that the Metadb server rather than the underlying Postgres server.
 
-* The section on "CREATE DATA ORIGIN" does not have a section number, and so appears as part of section 2.5.3 on AUTHORIZE. Also, since we don't know what a data origin is, and how it differs from a data source, this is not very informative.
+* XXX Section 2.5.2. ALTER TABLE: how is this different from regular `ALTER TABLE`? (Comments along the lines of section 2.5.3's "It differs from GRANT in that the authorization will also apply to tables created at a later time in the data source" would be helpful here.)
 
-* "When the initial snapshot has finished streaming, the message "source snapshot complete (deadline exceeded)" will be written to the log." What does the "deadline exceeded" part mean?
+* The section on "CREATE DATA ORIGIN" does not have a section number, and so appears as part of section 2.5.3 on AUTHORIZE. XXX Also, since we don't know what a data origin is, and how it differs from a data source, this is not very informative.
 
-* Reading section 2.5.4. CREATE DATA SOURCE, it's quickly apparent that we need a narrative guide on setting up Kafka for a FOLIO or ReShare installation, then creating MetaDB data sources for it. This may exist further down the document -- if so it should be referenced here -- or may need to be written.
+* XXX "When the initial snapshot has finished streaming, the message "source snapshot complete (deadline exceeded)" will be written to the log." What does the "deadline exceeded" part mean?
 
-* In section 2.5.5, "CREATE USER defines a new database user that will be managed by Metadb." What does it mean for MetaDB to manage the user?
+* Reading section 2.5.4. CREATE DATA SOURCE, it's quickly apparent that we need to write a narrative guide on setting up Kafka for a FOLIO or ReShare installation, then creating MetaDB data sources for it.
+
+* XXX In section 2.5.5, "CREATE USER defines a new database user that will be managed by Metadb." What does it mean for MetaDB to manage the user?
 
 * In section 3.1.1 (Hardware requirements), “Architecture: x86-64 (AMD64)“. Why does MetaDB care what architecture CPU it’s compiled for? Metadb is tested primarily on x86-64.  DevOps will want to try running it on ARM64, which is relatively new and not fully supported (or was not fully supported at last check) in some of the libraries.  Things like atomics used for spinlocks and also the Kafka client library.  This should be revisited once in a while to see if we can test on and support ARM64.
 
-* In section 3.1.2 (Software requirements), "Operating system: Debian 12 or later". Is that saying that Debian is _required_ (i.e. I won't be able to run MetaDB on my MacBook), or just that it's the primary development OS?
+* In section 3.1.2 (Software requirements), "Operating system: Debian 12 or later". This doesn't seem to be saying that Debian is _required_ (i.e. I won't be able to run MetaDB on my MacBook), just that it's the primary development OS. I will confirm this when I try to build and run my own MetaDB service.
 
 * Section 3.3. Server configuration should be preceded by a section on the different ways to invoke the `metadb` binary as a command-line tool or server.
 
-* In section 3.3, "superuser = postgres // superuser_password = zpreCaWS7S79dt82zgvD". Why does MetaDB need superuser access to Postgres?
+* XXX In section 3.3, "superuser = postgres // superuser_password = zpreCaWS7S79dt82zgvD". Why does MetaDB need superuser access to Postgres? Maybe only superusers can create new schemas?
 
 * In section 3.4 (Backups): "In general persistent data are stored in the database, and so the database should be backed up often." This should have a link to how this is best done for Postgres.
 
-* In section 3.7, it seems that a MetaDB server _is_ a Postgres server, but with extensions. If that's correct, it's worth saying explicitly. If so, then reason the `mdb` command-line client is legacy code is probably that we use `psql` instead.
+* In section 3.7, it is implied that a MetaDB server _is_ a Postgres server, but with extensions. That's not right, though. It's close enough that we can and do use the `psql` command-line client to communicate with MetaDB instead of the bespoke legacy client `mdb`, but MetaDB does not proxy all unrecognized commands through to the underlying Postgres.
 
 * In section 3.8.1, "Metadb currently supports reading Kafka messages in the format produced by the Debezium PostgreSQL connector for Kafka Connect." Links are needed here ... and I have a lot of learning to do.
+
+* This Section should open with a diagram showing the flow of data from the FOLIO UI via Okapi into the underlying Postgres database, through Debezium (via Kafka Connect?) to Kafka and on from there into the MetaDB database as a source where it is analyzed by queries from a command-line or GUI client.
 
 * In that section "A source PostgreSQL database" is presumably a FOLIO or ReShare database in our primary use cases.
 
 * In section 3.8.2 (Creating a connector), "... by setting `wal_level = logical` in `postgresql.conf`." This is in the source (FOLIO) Postgres database, not Metadb's database.
 
-* Sections 3.8.3 (Monitoring replication) 3.8.6 (Deleting a connection) are completely opaque to me. When I understand them, I will expand them.
+* Sections 3.8.3 (Monitoring replication) and 3.8.6 (Deleting a connection) are completely opaque to me. When I understand them, I will expand them.
 
-* In section 4.1.1, "Metadb transforms MARC records from the tables `marc_records_lb` and `records_lb` in schema `folio_source_record` to a tabular form which is stored in a new table, `folio_source_record.marc__t`." Is this set of schema and table names hardwired, or is there configuration for it?
+* XXX In section 4.1.1, "Metadb transforms MARC records from the tables `marc_records_lb` and `records_lb` in schema `folio_source_record` to a tabular form which is stored in a new table, `folio_source_record.marc__t`." Is this set of schema and table names hardwired, or is there configuration for it?
 
-* "Only records considered to be current are transformed, where current is defined as having `state = 'ACTUAL'` and an identifier present in `999 ff $i`." This is an established FOLIO-specific convention for marking a MARC record as “current”. The `ff` means that both indicators of the 999 field must be set to `f`.
+* "Only records considered to be current are transformed, where current is defined as having `state = 'ACTUAL'` and an identifier present in `999 ff $i`." This is an established FOLIO-specific convention for marking a MARC record as “current”. The FOLIO backing store record needs to have a `state` field with value `ACTUAL` and the MARC record that is carried by that FOLIO record needs to have a 999 field with both indicators set to `f` and whose `$i` subfield is non-empty.
 
-* "The MARC transform stores partition tables in the schema `marctab`." What is a partition table in this context? It doesn't seem to be to do with horizontal or vertical partitioning of tables.
+* XXX "The MARC transform stores partition tables in the schema `marctab`." What is a partition table in this context? It doesn't seem to be to do with horizontal or vertical partitioning of tables.
 
-* "FOLIO "derived tables" are automatically updated once per day, usually at about 3:00 UTC by default." The document does not introduce the term "derived table". What are they? How are they configured?
+* XXX "FOLIO "derived tables" are automatically updated once per day, usually at about 3:00 UTC by default." The document does not introduce the term "derived table". What are they? How are they configured?
 
 * Section 4.1.3. (Data model) should talk more about what can be known about the FOLIO-derived tables, as well as noting what is not documented. And maybe also list some specific important tables.
 
-* In section 4.1.4.1. "Table names have changed and now are derived from FOLIO internal table names". The bigger change here seems to be that the tables are spread across many different schemas. Where do the schema names come from? Are they simply copied from the schema names in the source database? Is it that LDP Classic used to map FOLIO's schema.table pairs to its own favoured names but that MetaDB has dropped that mapping step?
+* XXX In section 4.1.4.1. "Table names have changed and now are derived from FOLIO internal table names". The bigger change here seems to be that the tables are spread across many different schemas. Where do the schema names come from? Are they simply copied from the schema names in the source database? Is it that LDP Classic used to map FOLIO's schema.table pairs to its own favoured names but that MetaDB has dropped that mapping step?
 
-* In section 4.1.4.5, "Note that JSON data contained in the imported records are not transformed into columns." Is there a way to trigger this transformation after the import is complete?
+* XXX In section 4.1.4.5, "Note that JSON data contained in the imported records are not transformed into columns." Is there a way to trigger this transformation after the import is complete?
 
 * Section 4.1.5 (Configuring Metadb for FOLIO) should come much earlier in the document. It raises several questions:
-  * "use the `module 'folio'` option" -- what exactly does this do? Section 2.5.4 on CREATE DATA SOURCE says that `module` specifies "Name of pre-defined configuration", but is this merely a shortcut, or is doing something distinctive of its own?
-  * "Set `trimschemaprefix` to remove the tenant from schema names": why? Don't we want separate tenants' data to be separated in MetaDB? Or do we expect to use an entire separate Postgres database for each tenant?
-  * "Set [...] `addschemaprefix` to add a `folio_` prefix to the schema names" -- what does this get us?
-  * "In the Debezium PostgreSQL connector configuration, the following exclusions are suggested [list]". It would be interested to know the reasons for these exclusions. I am guessing most of them are omitted just because they are not of interest (e.g. pubsub state) but that `mod_login` is omitted for security reasons?
+  * XXX "use the `module 'folio'` option" -- what exactly does this do? Section 2.5.4 on CREATE DATA SOURCE says that `module` specifies "Name of pre-defined configuration", but is this merely a shortcut, or is doing something distinctive of its own, aside from specifying what scheduled queries to run?
+  * XXX "Set `trimschemaprefix` to remove the tenant from schema names": why? Don't we want separate tenants' data to be separated in MetaDB? Or do we expect to use an entire separate Postgres database for each tenant?
+  * XXX "Set [...] `addschemaprefix` to add a `folio_` prefix to the schema names" -- what does this get us?
+  * XXX "In the Debezium PostgreSQL connector configuration, the following exclusions are suggested [list]". It would be interested to know the reasons for these exclusions. I am guessing most of them are omitted just because they are not of interest (e.g. pubsub state) but that `mod_login` is omitted for security reasons?
 
-* In section 4.2.2 (Configuring Metadb for ReShare), "Before defining a ReShare data source, create a data origin for each consortial tenant". Does this mean each tenant _in_ a consortium, or each tenant _that represents_ a consortium? More generally, do these instructions pertain to using MetaDB for a ReShare tenant or for a ReShare consortium?
+* XXX In section 4.2.2 (Configuring Metadb for ReShare), "Before defining a ReShare data source, create a data origin for each consortial tenant". Does this mean each tenant _in_ a consortium, or each tenant _that represents_ a consortium? More generally, do these instructions pertain to using MetaDB for a ReShare tenant or for a ReShare consortium?
 
-* Why no `trimschemaprefix` when ingesting from ReShare?
+* XXX Why no `trimschemaprefix` when ingesting from ReShare?
 
 * At the end of section 4.2.2, some backquote slippage results in a hunk of text being in code font.
 
-* Section 4.3 (MARC transform for LDP) makes it clear that MARC transformation for LDP Classic is done by an external program. Is that true of MetaDB, too, or is the MARC transformation integrated?
+* XXX Section 4.3 (MARC transform for LDP) makes it clear that MARC transformation for LDP Classic is done by an external program. Is that true of MetaDB, too, or is the MARC transformation integrated?
 
