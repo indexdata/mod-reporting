@@ -140,9 +140,7 @@ one JSON record." More precisely, the table definition is created dynamically co
 
 * In section 4.1.1, "Metadb transforms MARC records from the tables `marc_records_lb` and `records_lb` in schema `folio_source_record` to a tabular form which is stored in a new table, `folio_source_record.marc__t`." Is this set of schema and table names hardwired, or is there configuration for it?
 
-* "Only records considered to be current are transformed, where current is defined as having `state = 'ACTUAL'` and an identifier present in `999 ff $i`." Is this a widespread notion of what it means for a MARC record to be “current”, or a FOLIO-specific convention?
-
-* Also, what does the `ff` in `999 ff $i` mean?
+* "Only records considered to be current are transformed, where current is defined as having `state = 'ACTUAL'` and an identifier present in `999 ff $i`." This is an established FOLIO-specific convention for marking a MARC record as “current”. The `ff` means that both indicators of the 999 field must be set to `f`.
 
 * "The MARC transform stores partition tables in the schema `marctab`." What is a partition table in this context? It doesn't seem to be to do with horizontal or vertical partitioning of tables.
 
