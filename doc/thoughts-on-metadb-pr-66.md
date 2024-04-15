@@ -101,21 +101,21 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * In section 2.4, "Metadb allows scheduling external SQL files to run on a regular basis." That is all hard-coded at the moment. The word "scheduling" there is misleading because at the moment there are no configuration knobs. When  a data source is configured, the `module` setting optionally specifies `folio` or `reshare`.  If one of those is specified, it enables the external SQL with specific hardcoded values.  That is the only configuration for external SQL at the moment. A relatively high priority feature would be to add configuration knobs to that, including the Git repository, tag, path, etc., and time of day and frequency when the SQL should run.  Ideally, this will work best if fully generalized to allow arbitrary scheduling of SQL.  The best way to describe this is a "job scheduler" and there is [a placeholder issue for it](https://github.com/metadb-project/metadb/issues/43).
 
-* XXX "Any tables created should not specify a schema name." Why not? Are all these tables implicitly in an "external directives" schema? It seems this is friendly advice rather than a prohibition.
+* "Any tables created should not specify a schema name." It seems that this is friendly advice rather than a prohibition. At the moment running external SQL is narrowly focused on specific community practices in FOLIO and ReShare, and it isn't as generalized as some other features. So for example it points to a specific repository that is managed by the reporting community in those projects.  So there may be an assumption here or there that you wouldn't want to make if you allow it to be pointed at any SQL. Current FOLIO/ReShare customers are not the only potential users of MetaDB. We contemplate using it in other applications, for example to analyse collections in [Reservoir](https://github.com/folio-org/mod-reservoir). Such new applications could well be the driver for prioritizing condifurability of scheduled SQL queries.
 
-* XXX In section 2.4.1, "The --metadb:table directive declares that the SQL file updates a specific table.  This allows Metadb to report on the status of the table." How?
+* In section 2.4.1, "The --metadb:table directive declares that the SQL file updates a specific table.  This allows Metadb to report on the status of the table." It does this by maintaining the the `metadb.table_update` table described in section 2.3.3.
 
 * In section 2.5, "These statements are only available when connecting to the Metadb server (not the database)." i.e. when `psql` or a similar program is targeted that the Metadb server rather than the underlying Postgres server.
 
-* XXX Section 2.5.2. ALTER TABLE: how is this different from regular `ALTER TABLE`? (Comments along the lines of section 2.5.3's "It differs from GRANT in that the authorization will also apply to tables created at a later time in the data source" would be helpful here.)
+* Section 2.5.2. ALTER TABLE: how is this different from regular `ALTER TABLE`? We know that in general Postgres-level DDL commands should not be run on MetaDB's tables. The MetaDB-level version runs extra checks.
 
-* The section on "CREATE DATA ORIGIN" does not have a section number, and so appears as part of section 2.5.3 on AUTHORIZE. XXX Also, since we don't know what a data origin is, and how it differs from a data source, this is not very informative.
+* The section on "CREATE DATA ORIGIN" does not have a section number, and so appears as part of section 2.5.3 on AUTHORIZE. Data origins form essentially a controlled vocabulary for the `__origin` column in tables. They are used primarily in ReShare to indicate which tenant in a consortium a given row was taken from. (When using Metadb for FOLIO, each tenant’s data goes into a separate database; but when using it for ReShare, all the tenants of a consortium go into a single shared database. ReShare internally uses FOLIO-style tenants to represent the tenants in a consortium, and Metadb combines the tables from all the tenants into a single table and fills in `__origin` to tell users which tenant a record belongs to.)
 
-* XXX "When the initial snapshot has finished streaming, the message "source snapshot complete (deadline exceeded)" will be written to the log." What does the "deadline exceeded" part mean?
+* "When the initial snapshot has finished streaming, the message "source snapshot complete (deadline exceeded)" will be written to the log." (The "deadline exceeded" exceeded here refers to a timeout when waiting for further change events. So it is communicating that the update has completed, not that it has been abandoned due to running out of allocated time.)
 
 * Reading section 2.5.4. CREATE DATA SOURCE, it's quickly apparent that we need to write a narrative guide on setting up Kafka for a FOLIO or ReShare installation, then creating MetaDB data sources for it.
 
-* XXX In section 2.5.5, "CREATE USER defines a new database user that will be managed by Metadb." What does it mean for MetaDB to manage the user?
+* In section 2.5.5, "CREATE USER defines a new database user that will be managed by Metadb." At the moment it doesn't mean much for MetaDB to manage the user, but the intent is that some database objects, such as user accounts, should not be modified directly by admins. Metadb-created tables fall into that category, and so do users. In principle there is a clear line between objects managed by Metadb and other objects.
 
 * In section 3.1.1 (Hardware requirements), “Architecture: x86-64 (AMD64)“. Why does MetaDB care what architecture CPU it’s compiled for? Metadb is tested primarily on x86-64.  DevOps will want to try running it on ARM64, which is relatively new and not fully supported (or was not fully supported at last check) in some of the libraries.  Things like atomics used for spinlocks and also the Kafka client library.  This should be revisited once in a while to see if we can test on and support ARM64.
 
@@ -151,6 +151,8 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * XXX In section 4.1.4.1. "Table names have changed and now are derived from FOLIO internal table names". The bigger change here seems to be that the tables are spread across many different schemas. Where do the schema names come from? Are they simply copied from the schema names in the source database? Is it that LDP Classic used to map FOLIO's schema.table pairs to its own favoured names but that MetaDB has dropped that mapping step?
 
+* XXX Do the facilities described on section 4.1.4.5 meet the requirements of [issue 57](https://github.com/metadb-project/metadb/issues/57) or does that point to something else?
+
 * XXX In section 4.1.4.5, "Note that JSON data contained in the imported records are not transformed into columns." Is there a way to trigger this transformation after the import is complete?
 
 * Section 4.1.5 (Configuring Metadb for FOLIO) should come much earlier in the document. It raises several questions:
@@ -159,7 +161,7 @@ Again, these observations arise from my reading of the user documentation, comin
   * XXX "Set [...] `addschemaprefix` to add a `folio_` prefix to the schema names" -- what does this get us?
   * XXX "In the Debezium PostgreSQL connector configuration, the following exclusions are suggested [list]". It would be interested to know the reasons for these exclusions. I am guessing most of them are omitted just because they are not of interest (e.g. pubsub state) but that `mod_login` is omitted for security reasons?
 
-* XXX In section 4.2.2 (Configuring Metadb for ReShare), "Before defining a ReShare data source, create a data origin for each consortial tenant". Does this mean each tenant _in_ a consortium, or each tenant _that represents_ a consortium? More generally, do these instructions pertain to using MetaDB for a ReShare tenant or for a ReShare consortium?
+* In section 4.2.2 (Configuring Metadb for ReShare), "Before defining a ReShare data source, create a data origin for each consortial tenant". This means each tenant _in_ a consortium, not a tenant _that represents_ a consortium?
 
 * XXX Why no `trimschemaprefix` when ingesting from ReShare?
 
