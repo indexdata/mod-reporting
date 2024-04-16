@@ -8,8 +8,7 @@ Mike Taylor, Index Data <mike@indexdata.com>
 * [Minor changes in various files](#minor-changes-in-various-files)
 * [Major changes in `poll.go`](#major-changes-in-pollgo)
 * [Appendix A. Things to do in the MetaDB source code](#appendix-a-things-to-do-in-the-metadb-source-code)
-* [Appendix B. Skeleton of developer documentation](#appendix-b-skeleton-of-developer-documentation)
-* [Appendix C. Changes to make to user documentation](#appendix-c-changes-to-make-to-user-documentation)
+* [Appendix B. Changes to make to user documentation](#appendix-b-changes-to-make-to-user-documentation)
 
 
 ## Introduction
@@ -60,24 +59,11 @@ As I've been reading the code to understand the implications of the pull request
 * Reconsider auto-formatting of `.adoc` files, in which line breaks are currently hard. Somthing about this [touches on one-space-between-sentences](https://indexdata.slack.com/archives/D0HP2MQ11/p1712755034675339).
 
 
-## Appendix B. Skeleton of developer documentation
-
-As noted in the first bullet point of Appendix A, I intend to add developer documentation reflecting my learning as I read the code and consult Nassib. The following skeleton is work in progress, of will be of no use to anyone but me.
-
-* `mdb` is an old client for the `metadb` server.  It probably is legacy code and probably should be removed.
-
-* The list of top-level features mentioned at the start of [the user documentation](https://metadb.dev/doc/) is probably worth using as a high-level overview of the code:
-  * streaming data sources
-    * In principle, multiple kinds of source: so far, only kafka
-  * data model transforms
-  * historical data
-
-* "The data contained in the Metadb database originally come from another place: a *data source*." Multiple sources can contribute to a single MetaDB store. We don't presently have real-world configurations that do this, but a theoretical example where this would be useful might be if a FOLIO instance has their module storage backends split across different database instances.
-
-
-## Appendix C. Changes to make to user documentation
+## Appendix B. Changes to make to user documentation
 
 Again, these observations arise from my reading of the user documentation, coming to it as a newbie. Some of the issues raised here are merely requests for clarification, and should be addressed just in the documentation; but some may turn out to be questions about implementation decisions.
+
+* In section 1.1L "The data contained in the Metadb database originally come from another place: a *data source*." Multiple sources can contribute to a single MetaDB store. We don't presently have real-world configurations that do this, but a theoretical example where this would be useful might be if a FOLIO instance has their module storage backends split across different database instances.
 
 * Leaping straight from "1.1. Getting started" to "1.2. Main tables" is bewildering. We really need more discussion of the concepts in between these sections. For example, a MetaDB database _is_ a Postgres database that is expected to be used in the same ways as other Postgres databases; that the same `psql` client is used to access both Postgres and MetaDB, but the latter does not fully proxy to the former; that certain GUI tools can be used for querying; that records have start and end datetimes which bound the period of their relevance in historic data.
 
