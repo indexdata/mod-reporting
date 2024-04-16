@@ -158,7 +158,7 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * "The MARC transform stores partition tables in the schema `marctab`." This refers to so-called "horizontal partitioning", which is used by almost all tables in MetaDB, but which we can usually ignore -- as we can in this case, using instead the virtual union table `folio_source_record.marc__t`.
 
-* XXX In section 4.1.2, "FOLIO "derived tables" are automatically updated once per day, usually at about 3:00 UTC by default." The document does not introduce the term "derived table". What are they? How are they configured?
+* In section 4.1.2, "FOLIO "derived tables" are automatically updated once per day, usually at about 3:00 UTC by default." The document does not introduce the term "derived table". These are helper tables for commonly used joins etc. They are created and updated by the Scheduled Query facility discussed above, executing SQL written by the community and kept in [the `sql_metadb/derived_tables/` area of the `folio-analytics` repository](https://github.com/folio-org/folio-analytics/tree/main/sql_metadb/derived_tables). the list of queries to run is held in [`runlist.txt`](https://github.com/folio-org/folio-analytics/blob/main/sql_metadb/derived_tables/runlist.txt).
 
 * Section 4.1.3. (Data model) should talk more about what can be known about the FOLIO-derived tables, as well as noting what is not documented. And maybe also list some specific important tables.
 
