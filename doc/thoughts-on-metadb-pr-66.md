@@ -179,5 +179,6 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * At the end of section 4.2.2, some backquote slippage results in a hunk of text being in code font.
 
-* XXX Section 4.3 (MARC transform for LDP) makes it clear that MARC transformation for LDP Classic is done by an external program. Is that true of MetaDB, too, or is the MARC transformation integrated?
+* Section 4.3 (MARC transform for LDP) makes it clear that MARC transformation
+for LDP Classic is done by an external program. For MetaDB, though, the MARC transformation is integrated.
 
