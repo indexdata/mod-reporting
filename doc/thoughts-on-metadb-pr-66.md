@@ -109,7 +109,20 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * Section 2.5.2. ALTER TABLE: how is this different from regular `ALTER TABLE`? We know that in general Postgres-level DDL commands should not be run on MetaDB's tables. The MetaDB-level version runs extra checks.
 
-* The section on "CREATE DATA ORIGIN" does not have a section number, and so appears as part of section 2.5.3 on AUTHORIZE. Data origins form essentially a controlled vocabulary for the `__origin` column in tables. They are used primarily in ReShare to indicate which tenant in a consortium a given row was taken from. (When using Metadb for FOLIO, each tenant’s data goes into a separate database; but when using it for ReShare, all the tenants of a consortium go into a single shared database. ReShare internally uses FOLIO-style tenants to represent the tenants in a consortium, and Metadb combines the tables from all the tenants into a single table and fills in `__origin` to tell users which tenant a record belongs to.)
+* The section on "CREATE DATA ORIGIN" does not have a section number, and so appears as part of section 2.5.3 on AUTHORIZE.
+
+* Data origins form essentially a controlled vocabulary for the `__origin` column in tables. They are used primarily in ReShare to indicate which tenant in a consortium a given row was taken from. (When using Metadb for FOLIO, each tenant’s data goes into a separate database; but when using it for ReShare, all the tenants of a consortium go into a single shared database. ReShare internally uses FOLIO-style tenants to represent the tenants in a consortium, and Metadb combines the tables from all the tenants into a single table and fills in `__origin` to tell users which tenant a record belongs to.)
+
+* More detail on how multiple ReShare tenants are handled:
+> When configured for ReShare, Metadb typically uses a single data source for the whole consortium, but it combines data from mutiple tenants into aggregated tables. Each record in these tables has an `__origin` field set to the name of the tenant from which it was derived. The ReShare data source does this by matching the start of the schema names of incoming records against the set of origins that have been defined by `CREATE DATA ORIGIN`. (This is conceptually defined in a `reshare` module, but the code has not at this point been split out into a modular system.)
+>
+> For example if the source ReShare database has `east_mod_rs.table1` and `west_mod_rs.table1`, the data in Metadb will be in `reshare_rs.table1` and each row's `__origin` will contain the value `east` or `west` to indicate which tenant the data came from.
+>
+> (The Kafka stream feeding a ReShare data source is configured to return records from all tenants. So configuring that streams is a whole nother aspect that’s different for FOLIO and ReShare.)
+>
+> The `__origin` field could be used for other things in non-ReShare systems. More generally, origin is intended as an alternative category to source.  Source may be just an accident of how data are collected, e.g. geographically in a sensor network. Origin is a way of tagging related data that come from different sources. It's an opaque string but it could potentially have structure like `a.b.c`.
+>
+> One application of this is that it’s perfectly possible for a ReShare consortium’s tenants to be hosted by multiple FOLIO instances. We would then set up MetaDB to use multiple sources, one per FOLIO instance (or, more precisely, one per Kafka that is listening to a FOLIO instance), and each of those sources would contribute records to the same MetaDB ReShare schema but provide different sets of values for those records’ `__origin` fields.
 
 * "When the initial snapshot has finished streaming, the message "source snapshot complete (deadline exceeded)" will be written to the log." (The "deadline exceeded" exceeded here refers to a timeout when waiting for further change events. So it is communicating that the update has completed, not that it has been abandoned due to running out of allocated time.)
 
@@ -123,7 +136,7 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * Section 3.3. Server configuration should be preceded by a section on the different ways to invoke the `metadb` binary as a command-line tool or server.
 
-* XXX In section 3.3, "superuser = postgres // superuser_password = zpreCaWS7S79dt82zgvD". Why does MetaDB need superuser access to Postgres? Maybe only superusers can create new schemas?
+* In section 3.3, "superuser = postgres // superuser_password = zpreCaWS7S79dt82zgvD". Why does MetaDB need superuser access to Postgres? It escalates to superuser for a very few things. One of them is creating users.
 
 * In section 3.4 (Backups): "In general persistent data are stored in the database, and so the database should be backed up often." This should have a link to how this is best done for Postgres.
 
@@ -139,13 +152,13 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * Sections 3.8.3 (Monitoring replication) and 3.8.6 (Deleting a connection) are completely opaque to me. When I understand them, I will expand them.
 
-* XXX In section 4.1.1, "Metadb transforms MARC records from the tables `marc_records_lb` and `records_lb` in schema `folio_source_record` to a tabular form which is stored in a new table, `folio_source_record.marc__t`." Is this set of schema and table names hardwired, or is there configuration for it?
+* In section 4.1.1, "Metadb transforms MARC records from the tables `marc_records_lb` and `records_lb` in schema `folio_source_record` to a tabular form which is stored in a new table, `folio_source_record.marc__t`." This set of schema and table names is hardwired and generally tailored for FOLIO and its reporting community. They share queries and wouldn't want variance in the table names.
 
 * "Only records considered to be current are transformed, where current is defined as having `state = 'ACTUAL'` and an identifier present in `999 ff $i`." This is an established FOLIO-specific convention for marking a MARC record as “current”. The FOLIO backing store record needs to have a `state` field with value `ACTUAL` and the MARC record that is carried by that FOLIO record needs to have a 999 field with both indicators set to `f` and whose `$i` subfield is non-empty.
 
-* XXX "The MARC transform stores partition tables in the schema `marctab`." What is a partition table in this context? It doesn't seem to be to do with horizontal or vertical partitioning of tables.
+* "The MARC transform stores partition tables in the schema `marctab`." This refers to so-called "horizontal partitioning", which is used by almost all tables in MetaDB, but which we can usually ignore -- as we can in this case, using instead the virtual union table `folio_source_record.marc__t`.
 
-* XXX "FOLIO "derived tables" are automatically updated once per day, usually at about 3:00 UTC by default." The document does not introduce the term "derived table". What are they? How are they configured?
+* XXX In section 4.1.2, "FOLIO "derived tables" are automatically updated once per day, usually at about 3:00 UTC by default." The document does not introduce the term "derived table". What are they? How are they configured?
 
 * Section 4.1.3. (Data model) should talk more about what can be known about the FOLIO-derived tables, as well as noting what is not documented. And maybe also list some specific important tables.
 
@@ -156,7 +169,7 @@ Again, these observations arise from my reading of the user documentation, comin
 * XXX In section 4.1.4.5, "Note that JSON data contained in the imported records are not transformed into columns." Is there a way to trigger this transformation after the import is complete?
 
 * Section 4.1.5 (Configuring Metadb for FOLIO) should come much earlier in the document. It raises several questions:
-  * XXX "use the `module 'folio'` option" -- what exactly does this do? Section 2.5.4 on CREATE DATA SOURCE says that `module` specifies "Name of pre-defined configuration", but is this merely a shortcut, or is doing something distinctive of its own, aside from specifying what scheduled queries to run?
+  * XXX "use the `module 'folio'` option" -- what exactly does this do? Section 2.5.4 on CREATE DATA SOURCE says that `module` specifies "Name of pre-defined configuration", but is this merely a shortcut, or is doing something distinctive of its own, aside from specifying what scheduled queries to run? For FOLIO, it runs a MARC transform that is not used for ReShare.  In the future there will likely be other differences.
   * XXX "Set `trimschemaprefix` to remove the tenant from schema names": why? Don't we want separate tenants' data to be separated in MetaDB? Or do we expect to use an entire separate Postgres database for each tenant?
   * XXX "Set [...] `addschemaprefix` to add a `folio_` prefix to the schema names" -- what does this get us?
   * XXX "In the Debezium PostgreSQL connector configuration, the following exclusions are suggested [list]". It would be interested to know the reasons for these exclusions. I am guessing most of them are omitted just because they are not of interest (e.g. pubsub state) but that `mod_login` is omitted for security reasons?
