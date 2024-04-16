@@ -162,21 +162,20 @@ Again, these observations arise from my reading of the user documentation, comin
 
 * Section 4.1.3. (Data model) should talk more about what can be known about the FOLIO-derived tables, as well as noting what is not documented. And maybe also list some specific important tables.
 
-* XXX In section 4.1.4.1. "Table names have changed and now are derived from FOLIO internal table names". The bigger change here seems to be that the tables are spread across many different schemas. Where do the schema names come from? Are they simply copied from the schema names in the source database? Is it that LDP Classic used to map FOLIO's schema.table pairs to its own favoured names but that MetaDB has dropped that mapping step?
+* In section 4.1.4.1. "Table names have changed and now are derived from FOLIO internal table names". The bigger change here seems to be that the tables are spread across many different schemas. The schema names come from the source database. LDP Classic was intended to be part of FOLIO and to provide reporting features for FOLIO, so it mapped FOLIO's _schema_._table_ pairs to its own favoured names. But Metadb is general-purpose and works more or less with any source database, so it has dropped the FOLIO-specific mapping step.
 
-* XXX Do the facilities described on section 4.1.4.5 meet the requirements of [issue 57](https://github.com/metadb-project/metadb/issues/57) or does that point to something else?
-
-* XXX In section 4.1.4.5, "Note that JSON data contained in the imported records are not transformed into columns." Is there a way to trigger this transformation after the import is complete?
+* In section 4.1.4.5, "Note that JSON data contained in the imported records are not transformed into columns." (There is no way to trigger this transformation after the import is complete.)
 
 * Section 4.1.5 (Configuring Metadb for FOLIO) should come much earlier in the document. It raises several questions:
-  * XXX "use the `module 'folio'` option" -- what exactly does this do? Section 2.5.4 on CREATE DATA SOURCE says that `module` specifies "Name of pre-defined configuration", but is this merely a shortcut, or is doing something distinctive of its own, aside from specifying what scheduled queries to run? For FOLIO, it runs a MARC transform that is not used for ReShare.  In the future there will likely be other differences.
-  * XXX "Set `trimschemaprefix` to remove the tenant from schema names": why? Don't we want separate tenants' data to be separated in MetaDB? Or do we expect to use an entire separate Postgres database for each tenant?
-  * XXX "Set [...] `addschemaprefix` to add a `folio_` prefix to the schema names" -- what does this get us?
-  * XXX "In the Debezium PostgreSQL connector configuration, the following exclusions are suggested [list]". It would be interested to know the reasons for these exclusions. I am guessing most of them are omitted just because they are not of interest (e.g. pubsub state) but that `mod_login` is omitted for security reasons?
+  * "use the `module 'folio'` option" -- Section 2.5.4 on CREATE DATA SOURCE says that `module` specifies "Name of pre-defined configuration", but this is not merely a shortcut. It's doing specific things to do with how FOLIO and ReShare use tenants, as well as specifying what scheduled queries to run. For FOLIO, it also runs a MARC transform that is not used for ReShare. In the future there will likely be other differences.
+  * "Set `trimschemaprefix` to remove the tenant from schema names": We do this because when we're interested in multiple FOLIO tenants, each tenant's data goes into an entirely separate MetaDB database.
+  * "Set [...] `addschemaprefix` to add a `folio_` prefix to the schema names." This is done because we generally want the option of using MetaDB for _all_ a library's data analysis needs, not justthose related to FOLIO. For example, you might also make a data-source for (say) VuFind’s Solr database, and use it to maintain tables with names like `vufind_inventory.items` and `vufind_requests.requests`.
+  * There is nothing in the `CREATE DATA SOURCE` statement to indicate what tenant's data we want. That information has to be included in the configuration of the nominated Kafka topic.
+  * XXX "In the Debezium PostgreSQL connector configuration, the following exclusions are suggested [list]". Various tables are excluded for different reasons. Most of them are omitted just because they are not of interest (e.g. pubsub state) but data from some modules, e.g. `mod_login`, is omitted for security reasons. It is up to individual libraries to tailor this exclusion list to their requirements.
 
 * In section 4.2.2 (Configuring Metadb for ReShare), "Before defining a ReShare data source, create a data origin for each consortial tenant". This means each tenant _in_ a consortium, not a tenant _that represents_ a consortium?
 
-* XXX Why no `trimschemaprefix` when ingesting from ReShare?
+* We do not use `trimschemaprefix` when ingesting from ReShare, because the `reshare` module uses the tentant names in the prefixes to choose between the configured data origins.
 
 * At the end of section 4.2.2, some backquote slippage results in a hunk of text being in code font.
 
