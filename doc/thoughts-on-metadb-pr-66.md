@@ -166,5 +166,7 @@ Again, these observations arise from my reading of the user documentation, comin
 * At the end of section 4.2.2, some backquote slippage results in a hunk of text being in code font.
 
 * Section 4.3 (MARC transform for LDP) makes it clear that MARC transformation
-for LDP Classic is done by an external program. For MetaDB, though, the MARC transformation is integrated.
+for LDP Classic is done by an external program, `marct` (formerly known as `ldpmarc`). For MetaDB, though, the MARC transformation is integrated.
+
+* We should link to https://github.com/folio-org/folio-analytics/wiki/Cookbook:-User-Defined-Function
 
