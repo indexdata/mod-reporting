@@ -4,7 +4,6 @@ import "os"
 import "fmt"
 import "net/http"
 import "time"
-import "strings"
 import "strconv"
 import "html"
 import "github.com/MikeTaylor/catlogger"
@@ -46,11 +45,29 @@ func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) 
 		sessions: map[string]*ModReportingSession{},
 	}
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { handler(w, r, &server) })
+	// Every request is logged, whichever route it lands on.
+	server.server.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		server.Log("path", req.URL.Path)
+		mux.ServeHTTP(w, req)
+	})
+
+	mux.HandleFunc("/{$}", handleRoot)
 	fs := http.FileServer(http.Dir(root + "/htdocs"))
 	mux.Handle("/htdocs/", http.StripPrefix("/htdocs/", fs))
-	fs2 := http.FileServer(http.Dir(root + "/htdocs"))
-	mux.Handle("/favicon.ico", fs2)
+	mux.Handle("/favicon.ico", fs)
+	mux.HandleFunc("/admin/health", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(w, "Behold! I live!!")
+	})
+	mux.HandleFunc("/ldp/config", server.handler(handleConfig))
+	mux.HandleFunc("/ldp/config/", server.handler(handleConfigKey))
+	mux.HandleFunc("/ldp/db/tables", server.handler(handleTables))
+	mux.HandleFunc("/ldp/db/columns", server.handler(handleColumns))
+	mux.HandleFunc("POST /ldp/db/query", server.handler(handleQuery))
+	mux.HandleFunc("POST /ldp/db/reports", server.handler(handleReport))
+	mux.HandleFunc("/ldp/db/log", server.handler(handleLogs))
+	mux.HandleFunc("/ldp/db/version", server.handler(handleVersion))
+	mux.HandleFunc("/ldp/db/updates", server.handler(handleUpdates))
+	mux.HandleFunc("/ldp/db/processes", server.handler(handleProcesses))
 
 	return &server
 }
@@ -100,13 +117,9 @@ func (server *ModReportingServer) findSession(url string, tenant string, token s
 	return session, nil
 }
 
-func handler(w http.ResponseWriter, req *http.Request, server *ModReportingServer) {
-	path := req.URL.Path
-	server.Log("path", path)
-
-	if path == "/" {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprintln(w, `
+func handleRoot(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintln(w, `
 This is <a href="https://github.com/folio-org/mod-reporting">mod-reporting</a>. Try:
 <ul>
   <li><a href="/admin/health">Health check</a></li>
@@ -120,36 +133,12 @@ This is <a href="https://github.com/folio-org/mod-reporting">mod-reporting</a>. 
   <li><a href="/ldp/db/updates">Updates</a></li>
   <li><a href="/ldp/db/processes">Processes</a></li>
 </ul>`)
-		return
-	} else if path == "/admin/health" {
-		fmt.Fprintln(w, "Behold! I live!!")
-		return
-	}
+}
 
-	if path == "/ldp/config" {
-		runWithErrorHandling(w, req, server, handleConfig)
-	} else if strings.HasPrefix(path, "/ldp/config/") {
-		runWithErrorHandling(w, req, server, handleConfigKey)
-	} else if path == "/ldp/db/tables" {
-		runWithErrorHandling(w, req, server, handleTables)
-	} else if path == "/ldp/db/columns" {
-		runWithErrorHandling(w, req, server, handleColumns)
-	} else if path == "/ldp/db/query" && req.Method == "POST" {
-		runWithErrorHandling(w, req, server, handleQuery)
-	} else if path == "/ldp/db/reports" && req.Method == "POST" {
-		runWithErrorHandling(w, req, server, handleReport)
-	} else if path == "/ldp/db/log" {
-		runWithErrorHandling(w, req, server, handleLogs)
-	} else if path == "/ldp/db/version" {
-		runWithErrorHandling(w, req, server, handleVersion)
-	} else if path == "/ldp/db/updates" {
-		runWithErrorHandling(w, req, server, handleUpdates)
-	} else if path == "/ldp/db/processes" {
-		runWithErrorHandling(w, req, server, handleProcesses)
-	} else {
-		// Unrecognized
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, "Not found")
+// handler adapts a handlerFn into an http.HandlerFunc for route registration.
+func (server *ModReportingServer) handler(f handlerFn) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		runWithErrorHandling(w, req, server, f)
 	}
 }
 
