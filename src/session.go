@@ -2,6 +2,7 @@ package main
 
 import "context"
 import "strings"
+import "sync"
 import "fmt"
 import "github.com/indexdata/foliogo"
 import "github.com/jackc/pgx/v5"
@@ -22,6 +23,7 @@ type ModReportingSession struct {
 	tenant       string
 	token        string
 	folioSession foliogo.Session
+	dbConnMutex  sync.Mutex
 	dbConn       PgxIface
 	isMDB        bool
 	// Overridden by tests that need a DB connection without a live Postgres
@@ -114,6 +116,11 @@ func (session *ModReportingSession) makeDbConn(token string) (PgxIface, bool, er
 }
 
 func (session *ModReportingSession) findDbConn(token string) (PgxIface, error) {
+	// Unlike the session cache, the lock is held across creation: a second
+	// connection pool would leak, as nothing ever closes the discarded one.
+	session.dbConnMutex.Lock()
+	defer session.dbConnMutex.Unlock()
+
 	if session.dbConn == nil {
 		makeConn := session.overrideMakeConn
 		if makeConn == nil {
