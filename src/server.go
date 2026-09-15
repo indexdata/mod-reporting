@@ -31,9 +31,6 @@ type ModReportingServer struct {
 }
 
 func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) *ModReportingServer {
-	tr := &http.Transport{}
-	tr.RegisterProtocol("file", http.NewFileTransport(http.Dir(root)))
-
 	mux := http.NewServeMux()
 	var server = ModReportingServer{
 		config: cfg,
