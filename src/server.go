@@ -1,6 +1,7 @@
 package main
 
 import "os"
+import "errors"
 import "fmt"
 import "net/http"
 import "time"
@@ -156,12 +157,10 @@ func runWithErrorHandling(w http.ResponseWriter, req *http.Request, server *ModR
 
 	err = f(w, req, session)
 	if err != nil {
-		var status int
-		switch e := err.(type) {
-		case *HTTPError:
-			status = e.status
-		default:
-			status = http.StatusInternalServerError
+		status := http.StatusInternalServerError
+		var httpErr *HTTPError
+		if errors.As(err, &httpErr) {
+			status = httpErr.status
 		}
 		w.WriteHeader(status)
 		fmt.Fprintln(w, html.EscapeString(err.Error()))
