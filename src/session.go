@@ -24,6 +24,8 @@ type ModReportingSession struct {
 	folioSession foliogo.Session
 	dbConn       PgxIface
 	isMDB        bool
+	// Overridden by tests that need a DB connection without a live Postgres
+	overrideMakeConn func(token string) (PgxIface, bool, error)
 }
 
 /*
@@ -113,7 +115,11 @@ func (session *ModReportingSession) makeDbConn(token string) (PgxIface, bool, er
 
 func (session *ModReportingSession) findDbConn(token string) (PgxIface, error) {
 	if session.dbConn == nil {
-		dbConn, isMDB, err := session.makeDbConn(token)
+		makeConn := session.overrideMakeConn
+		if makeConn == nil {
+			makeConn = session.makeDbConn
+		}
+		dbConn, isMDB, err := makeConn(token)
 		if err != nil {
 			return nil, err
 		}
