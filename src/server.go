@@ -6,6 +6,7 @@ import "fmt"
 import "net/http"
 import "time"
 import "strconv"
+import "sync"
 import "html"
 import "github.com/MikeTaylor/catlogger"
 
@@ -21,11 +22,12 @@ func (m *HTTPError) Error() string {
 type handlerFn func(w http.ResponseWriter, req *http.Request, session *ModReportingSession) error
 
 type ModReportingServer struct {
-	config   *config
-	logger   *catlogger.Logger
-	root     string
-	server   http.Server
-	sessions map[string]*ModReportingSession
+	config       *config
+	logger       *catlogger.Logger
+	root         string
+	server       http.Server
+	sessionMutex sync.Mutex
+	sessions     map[string]*ModReportingSession
 }
 
 func MakeModReportingServer(cfg *config, logger *catlogger.Logger, root string) *ModReportingServer {
@@ -104,14 +106,27 @@ func (server *ModReportingServer) launch() error {
 // We maintain a map of tenant:url to session
 func (server *ModReportingServer) findSession(url string, tenant string, token string) (*ModReportingSession, error) {
 	key := sessionKey(url, tenant, token)
+
+	server.sessionMutex.Lock()
 	session := server.sessions[key]
+	server.sessionMutex.Unlock()
 	if session != nil {
 		return session, nil
 	}
 
+	// The lock is not held across session creation, which makes network
+	// calls: a slow FOLIO login must not block requests for other sessions.
 	session, err := NewModReportingSession(server, url, tenant, token)
 	if err != nil {
 		return nil, fmt.Errorf("could not create session for key '%s': %w", key, err)
+	}
+
+	server.sessionMutex.Lock()
+	defer server.sessionMutex.Unlock()
+	existing := server.sessions[key]
+	if existing != nil {
+		// Another request created this session while we were building ours
+		return existing, nil
 	}
 
 	server.sessions[key] = session
